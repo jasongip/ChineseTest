@@ -1,0 +1,6 @@
+{
+  "name": "MKCSCC 廣東話中級班入學模擬測驗",
+  "description": "MKCSCC 廣東話中級班入學模擬測驗系統 (口試與筆試互動評估及列印試卷)",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
