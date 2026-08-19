@@ -4,6 +4,7 @@ import { INITIAL_CANDIDATE, READING_GROUPS } from './data/examContent';
 import { Navbar } from './components/Navbar';
 import { SpeakingAssessment } from './components/SpeakingAssessment';
 import { WrittenAssessment } from './components/WrittenAssessment';
+import { VocabPracticePage } from './components/VocabPracticePage';
 import { DailyPracticeGame } from './components/DailyPracticeGame';
 import { PrintablePaper } from './components/PrintablePaper';
 import { AssessmentReport } from './components/AssessmentReport';
@@ -193,7 +194,10 @@ export default function App() {
           />
         )}
 
-        {/* VIEW 3: Parent Daily 10-Min Practice Game */}
+        {/* VIEW 3: Dedicated Vocab Practice Page (4 Question Types for Jovan) */}
+        {currentSection === 'vocab_practice' && <VocabPracticePage />}
+
+        {/* VIEW 4: Parent Daily 10-Min Practice Game */}
         {currentSection === 'daily_practice' && <DailyPracticeGame />}
 
         {/* VIEW 4: Printable Paper Mode */}

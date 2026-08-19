@@ -7,9 +7,10 @@ export type ExamSection =
   | 'part2_matching_2' 
   | 'part2_choices_3' 
   | 'part2_writing_4'
+  | 'vocab_practice'
+  | 'daily_practice'
   | 'report'
-  | 'print'
-  | 'daily_practice';
+  | 'print';
 
 export interface CandidateInfo {
   nameEn: string;

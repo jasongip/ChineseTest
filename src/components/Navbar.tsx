@@ -35,9 +35,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   const navItems: { id: ExamSection; label: string; num: string; badge?: string }[] = [
     { id: 'part1_speaking_1', label: 'Part 1: 口試評估', num: '01', badge: '20m' },
     { id: 'part2_reading_1', label: 'Part 2: 筆試認讀', num: '02', badge: '40m' },
-    { id: 'daily_practice', label: '10分鐘複習遊戲', num: '03', badge: '家長' },
-    { id: 'print', label: '模擬試卷列印', num: '04' },
-    { id: 'report', label: '評分報告與證書', num: '05' },
+    { id: 'vocab_practice', label: '仔仔詞語特訓', num: '03', badge: '180+ 詞' },
+    { id: 'daily_practice', label: '10分鐘複習遊戲', num: '04', badge: '家長' },
+    { id: 'print', label: '模擬試卷列印', num: '05' },
+    { id: 'report', label: '評分報告與證書', num: '06' },
   ];
 
   const handleTestVoice = () => {
