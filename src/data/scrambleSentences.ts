@@ -85,7 +85,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_008',
-    targetSentence: '班上的同學都非常友善。',
+    targetSentence: '班上的同學都對人非常友善。',
     segments: ['班上的同學', '都對人', '非常', '友善。'],
     category: 'family_people',
     categoryName: '家庭與人物',
@@ -145,7 +145,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_014',
-    targetSentence: '可愛的孩子在綠油油的草地上奔跑。',
+    targetSentence: '可愛的孩子在綠油油的草地上歡樂地奔跑。',
     segments: ['可愛的孩子', '在綠油油的草地上', '歡樂地', '奔跑。'],
     category: 'family_people',
     categoryName: '家庭與人物',
@@ -155,7 +155,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_015',
-    targetSentence: '我會自己把書包收拾好。',
+    targetSentence: '我會自己把書包收拾乾淨。',
     segments: ['我會自己', '把書包', '收拾', '乾淨。'],
     category: 'family_people',
     categoryName: '家庭與人物',
@@ -179,7 +179,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_017',
-    targetSentence: '我們的學校既寬敞又明亮。',
+    targetSentence: '我們的學校環境既寬敞又明亮。',
     segments: ['我們的學校', '環境', '既寬敞', '又明亮。'],
     category: 'school_learning',
     categoryName: '學校與學習',
@@ -189,7 +189,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_018',
-    targetSentence: '開學第一天看見很多新朋友。',
+    targetSentence: '開學第一天我在校園裏看見很多新朋友。',
     segments: ['開學第一天', '我在校園裏', '看見很多', '新朋友。'],
     category: 'school_learning',
     categoryName: '學校與學習',
@@ -209,7 +209,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_020',
-    targetSentence: '下課鈴聲響起同學們走出課室。',
+    targetSentence: '下課鈴聲響起同學們排隊走出課室。',
     segments: ['下課鈴聲響起', '同學們', '排隊', '走出課室。'],
     category: 'school_learning',
     categoryName: '學校與學習',
@@ -229,7 +229,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_022',
-    targetSentence: '同學們在操場上快樂地跑步。',
+    targetSentence: '同學們在寬敞的操場上快樂地跑步。',
     segments: ['同學們', '在寬敞的操場上', '快樂地', '跑步。'],
     category: 'school_learning',
     categoryName: '學校與學習',
@@ -239,7 +239,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_023',
-    targetSentence: '在圖書館裏看書要保持安靜。',
+    targetSentence: '在圖書館裏看書學習一定要保持安靜。',
     segments: ['在圖書館裏', '看書學習', '一定要', '保持安靜。'],
     category: 'school_learning',
     categoryName: '學校與學習',
@@ -249,7 +249,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_024',
-    targetSentence: '我每天穿上整齊的校服上學。',
+    targetSentence: '我每天穿上整齊的校服上學去。',
     segments: ['我每天', '穿上', '整齊的校服', '上學去。'],
     category: 'school_learning',
     categoryName: '學校與學習',
@@ -269,7 +269,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_026',
-    targetSentence: '只要用心用功學習成績就會進步。',
+    targetSentence: '只要用心用功學習中文成績就會進步。',
     segments: ['只要', '用心用功學習', '中文成績', '就會進步。'],
     category: 'school_learning',
     categoryName: '學校與學習',
@@ -289,7 +289,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_028',
-    targetSentence: '使用剪刀做美勞時要格外小心。',
+    targetSentence: '使用剪刀做手工時一定要格外小心。',
     segments: ['使用剪刀', '做手工時', '一定要', '格外小心。'],
     category: 'school_learning',
     categoryName: '學校與學習',
@@ -299,7 +299,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_029',
-    targetSentence: '這張圖畫塗滿了美麗的色彩。',
+    targetSentence: '這張圖畫塗滿了五彩美麗的顏色。',
     segments: ['這張圖畫', '塗滿了', '五彩美麗的', '顏色。'],
     category: 'school_learning',
     categoryName: '學校與學習',
@@ -309,7 +309,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_030',
-    targetSentence: '放學前請把桌椅排列整齊。',
+    targetSentence: '放學前請大家把課室桌椅排整齊。',
     segments: ['放學前', '請大家把', '課室桌椅', '排整齊。'],
     category: 'school_learning',
     categoryName: '學校與學習',
@@ -323,7 +323,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   // ==========================================
   {
     id: 's_031',
-    targetSentence: '早晨金色的太陽從東方升起。',
+    targetSentence: '早晨金色的太陽慢慢從東方升起來。',
     segments: ['早晨金色的太陽', '慢慢從', '東方', '升起來。'],
     category: 'nature_animals',
     categoryName: '大自然與動植物',
@@ -343,7 +343,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_033',
-    targetSentence: '圓圓的月亮高高掛在黑夜中。',
+    targetSentence: '圓圓的月亮高高地掛在黑夜中。',
     segments: ['圓圓的月亮', '高高地', '掛在', '黑夜中。'],
     category: 'nature_animals',
     categoryName: '大自然與動植物',
@@ -353,7 +353,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_034',
-    targetSentence: '天上的星星一閃一閃放光明。',
+    targetSentence: '天上的星星一閃一閃地發出美麗光明。',
     segments: ['天上的星星', '一閃一閃地', '發出', '美麗光明。'],
     category: 'nature_animals',
     categoryName: '大自然與動植物',
@@ -363,7 +363,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_035',
-    targetSentence: '我們要好好愛護美麗的地球。',
+    targetSentence: '我們大家都要好好愛護美麗的地球。',
     segments: ['我們大家', '都要好好', '愛護美麗的', '地球。'],
     category: 'nature_animals',
     categoryName: '大自然與動植物',
@@ -373,7 +373,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_036',
-    targetSentence: '太空人乘著神奇的火箭飛向太空。',
+    targetSentence: '太空人乘著神奇的火箭飛向神秘太空。',
     segments: ['太空人', '乘著神奇的火箭', '飛向', '神秘太空。'],
     category: 'nature_animals',
     categoryName: '大自然與動植物',
@@ -383,7 +383,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_037',
-    targetSentence: '郊外的空氣特別清新舒服。',
+    targetSentence: '美麗郊外的空氣聞起來特別清新舒服。',
     segments: ['美麗郊外的空氣', '聞起來', '特別', '清新舒服。'],
     category: 'nature_animals',
     categoryName: '大自然與動植物',
@@ -393,7 +393,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_038',
-    targetSentence: '小小的種子在濕潤的泥土裏發芽。',
+    targetSentence: '小小的種子在濕潤的泥土裏慢慢發芽生長。',
     segments: ['小小的種子', '在濕潤的泥土裏', '慢慢', '發芽生長。'],
     category: 'nature_animals',
     categoryName: '大自然與動植物',
@@ -403,7 +403,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_039',
-    targetSentence: '清澈的小溪邊有光滑的小石頭。',
+    targetSentence: '清澈的小溪邊散落著許多光滑的小石頭。',
     segments: ['清澈的小溪邊', '散落著', '許多光滑的', '小石頭。'],
     category: 'nature_animals',
     categoryName: '大自然與動植物',
@@ -413,7 +413,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_040',
-    targetSentence: '廣闊的海洋裏生活著許多魚兒。',
+    targetSentence: '廣闊的海洋裏生活著許多可愛的魚兒。',
     segments: ['廣闊的海洋裏', '生活著', '許多可愛的', '魚兒。'],
     category: 'nature_animals',
     categoryName: '大自然與動植物',
@@ -423,7 +423,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_041',
-    targetSentence: '綠油油的池塘裏開滿了荷花。',
+    targetSentence: '綠油油的池塘裏盛開著粉紅色的美麗荷花。',
     segments: ['綠油油的池塘裏', '盛開著', '粉紅色的', '美麗荷花。'],
     category: 'nature_animals',
     categoryName: '大自然與動植物',
@@ -433,7 +433,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_042',
-    targetSentence: '高大的樹木為我們遮擋烈日。',
+    targetSentence: '路邊高大的樹木為我們遮擋住炎熱陽光。',
     segments: ['路邊高大的樹木', '為我們', '遮擋住', '炎熱陽光。'],
     category: 'nature_animals',
     categoryName: '大自然與動植物',
@@ -443,7 +443,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_043',
-    targetSentence: '細細的雨點從空中落在大地上。',
+    targetSentence: '細細的雨點輕輕地從空中落在大地上。',
     segments: ['細細的雨點', '輕輕地', '從空中落在大地上。'],
     category: 'nature_animals',
     categoryName: '大自然與動植物',
@@ -453,7 +453,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_044',
-    targetSentence: '五彩的蝴蝶在花叢中翩翩起舞。',
+    targetSentence: '五彩的蝴蝶在美麗的花叢中快樂地跳舞。',
     segments: ['五彩的蝴蝶', '在美麗的花叢中', '快樂地', '跳舞。'],
     category: 'nature_animals',
     categoryName: '大自然與動植物',
@@ -463,7 +463,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_045',
-    targetSentence: '勤勞的蜜蜂在花園裏採集花蜜。',
+    targetSentence: '勤勞的小蜜蜂在花園裏忙著採集花蜜。',
     segments: ['勤勞的小蜜蜂', '在花園裏', '忙著', '採集花蜜。'],
     category: 'nature_animals',
     categoryName: '大自然與動植物',
@@ -473,7 +473,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_046',
-    targetSentence: '青蛙在荷葉上大聲呱呱叫。',
+    targetSentence: '綠色的小青蛙坐在荷葉上大聲地呱呱叫。',
     segments: ['綠色的小青蛙', '坐在荷葉上', '大聲地', '呱呱叫。'],
     category: 'nature_animals',
     categoryName: '大自然與動植物',
@@ -483,7 +483,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_047',
-    targetSentence: '小小的螞蟻齊心協力搬運食物。',
+    targetSentence: '小小的螞蟻齊心協力搬運著美味食物。',
     segments: ['小小的螞蟻', '齊心協力', '搬運著', '美味食物。'],
     category: 'nature_animals',
     categoryName: '大自然與動植物',
@@ -493,7 +493,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_048',
-    targetSentence: '春天來了燕子從南方飛回來。',
+    targetSentence: '春天來了小燕子從南方飛回來。',
     segments: ['春天來了', '小燕子', '從南方', '飛回來。'],
     category: 'nature_animals',
     categoryName: '大自然與動植物',
@@ -517,7 +517,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   // ==========================================
   {
     id: 's_050',
-    targetSentence: '多做運動能讓身體健康強壯。',
+    targetSentence: '多做運動能讓我們的身體變得健康強壯。',
     segments: ['多做運動', '能讓我們的身體', '變得', '健康強壯。'],
     category: 'daily_actions',
     categoryName: '身體與動作',
@@ -527,7 +527,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_051',
-    targetSentence: '我們用耳朵聆聽動聽的音樂。',
+    targetSentence: '我們用靈敏的耳朵認真聆聽動聽的音樂聲音。',
     segments: ['我們用靈敏的耳朵', '認真聆聽', '動聽的', '音樂聲音。'],
     category: 'daily_actions',
     categoryName: '身體與動作',
@@ -537,7 +537,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_052',
-    targetSentence: '明亮的眼睛能看見美麗的世界。',
+    targetSentence: '明亮的眼睛能看見色彩繽紛的美麗世界。',
     segments: ['明亮的眼睛', '能看見', '色彩繽紛的', '美麗世界。'],
     category: 'daily_actions',
     categoryName: '身體與動作',
@@ -547,7 +547,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_053',
-    targetSentence: '用鼻子能聞到花朵的清香。',
+    targetSentence: '用靈敏的鼻子能聞到花朵散發的清新香味。',
     segments: ['用靈敏的鼻子', '能聞到', '花朵散發的', '清新香味。'],
     category: 'daily_actions',
     categoryName: '身體與動作',
@@ -557,7 +557,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_054',
-    targetSentence: '張開嘴巴說出有禮貌的話。',
+    targetSentence: '我們要張開嘴巴說出有禮貌的話。',
     segments: ['我們要', '張開嘴巴', '說出', '有禮貌的話。'],
     category: 'daily_actions',
     categoryName: '身體與動作',
@@ -567,7 +567,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_055',
-    targetSentence: '姐姐的頭髮烏黑又柔順。',
+    targetSentence: '姐姐長長的頭髮打理得烏黑又柔順。',
     segments: ['姐姐長長的頭髮', '打理得', '烏黑', '又柔順。'],
     category: 'daily_actions',
     categoryName: '身體與動作',
@@ -577,7 +577,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_056',
-    targetSentence: '吃飽飯後摸摸圓滾滾的肚子。',
+    targetSentence: '吃飽飯後弟弟摸摸圓滾滾的小肚子。',
     segments: ['吃飽飯後', '弟弟摸摸', '圓滾滾的', '小肚子。'],
     category: 'daily_actions',
     categoryName: '身體與動作',
@@ -587,7 +587,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_057',
-    targetSentence: '妹妹紅撲撲的小臉兒真可愛。',
+    targetSentence: '小妹妹紅撲撲的小臉兒看起來真可愛。',
     segments: ['小妹妹', '紅撲撲的小臉兒', '看起來', '真可愛。'],
     category: 'daily_actions',
     categoryName: '身體與動作',
@@ -601,7 +601,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   // ==========================================
   {
     id: 's_058',
-    targetSentence: '我們走路要走在行人路上。',
+    targetSentence: '我們走路一定要走在安全的行人路上。',
     segments: ['我們走路', '一定要走在', '安全的', '行人路上。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -611,7 +611,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_059',
-    targetSentence: '天黑了小鳥也要飛回樹巢。',
+    targetSentence: '天黑的時候小鳥也飛回溫暖的家。',
     segments: ['天黑的時候', '小鳥也', '飛回', '溫暖的家。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -621,7 +621,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_060',
-    targetSentence: '爸爸下班回來買了新鮮水果。',
+    targetSentence: '爸爸下班回來買了新鮮美味的水果。',
     segments: ['爸爸下班回來', '買了', '新鮮美味的', '水果。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -631,7 +631,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_061',
-    targetSentence: '小狗聽到呼喚馬上跑了過來。',
+    targetSentence: '可愛的小狗聽到呼喚馬上跑了過來。',
     segments: ['可愛的小狗', '聽到呼喚', '馬上', '跑了過來。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -641,7 +641,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_062',
-    targetSentence: '清早鬧鐘響了我準時起牀。',
+    targetSentence: '清早鬧鐘響起我馬上準時起牀。',
     segments: ['清早鬧鐘響起', '我馬上', '準時', '起牀。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -651,7 +651,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_063',
-    targetSentence: '小雞從破開的蛋殼裏鑽出來。',
+    targetSentence: '可愛的小雞從蛋殼裏慢慢鑽出來。',
     segments: ['可愛的小雞', '從蛋殼裏', '慢慢', '鑽出來。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -661,7 +661,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_064',
-    targetSentence: '吃飯前要把雙手洗得乾乾淨淨。',
+    targetSentence: '吃飯之前我們要把雙手洗得乾乾淨淨。',
     segments: ['吃飯之前', '我們要', '把雙手洗得', '乾乾淨淨。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -671,7 +671,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_065',
-    targetSentence: '運動出汗後洗澡感到非常舒服。',
+    targetSentence: '運動出汗後去洗澡感到非常舒服。',
     segments: ['運動出汗後', '去洗澡', '感到', '非常舒服。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -681,7 +681,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_066',
-    targetSentence: '做完功課後要讓眼睛適當休息。',
+    targetSentence: '做完功課後要讓眼睛好好適當休息。',
     segments: ['做完功課後', '要讓眼睛', '好好', '適當休息。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -691,7 +691,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_067',
-    targetSentence: '音樂課上大家快樂地大聲唱歌。',
+    targetSentence: '在音樂課上大家快樂地大聲唱歌。',
     segments: ['在音樂課上', '大家', '快樂地', '大聲唱歌。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -701,7 +701,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_068',
-    targetSentence: '夏天去清涼的泳池游泳最消暑。',
+    targetSentence: '夏天天氣炎熱去泳池開心地游泳。',
     segments: ['夏天天氣炎熱', '去泳池', '開心地', '游泳。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -711,7 +711,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_069',
-    targetSentence: '小朋友在公園裏玩捉迷藏遊戲。',
+    targetSentence: '小朋友在公園裏一起玩有趣的捉迷藏遊戲。',
     segments: ['小朋友在公園裏', '一起玩', '有趣的', '捉迷藏遊戲。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -721,7 +721,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_070',
-    targetSentence: '同學舉手自信地回答問題。',
+    targetSentence: '認真的同學舉手自信地回答老師問題。',
     segments: ['認真的同學', '舉手自信地', '回答', '老師問題。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -731,7 +731,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_071',
-    targetSentence: '弟弟懂事地點頭表示明白。',
+    targetSentence: '懂事的弟弟微笑著點頭表示完全明白。',
     segments: ['懂事的弟弟', '微笑著點頭', '表示', '完全明白。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -741,7 +741,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_072',
-    targetSentence: '週末我們全家一起打掃房間。',
+    targetSentence: '到了週末我們全家人一起打掃房間。',
     segments: ['到了週末', '我們全家人', '一起', '打掃房間。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -751,7 +751,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_073',
-    targetSentence: '父母辛勤工作用心照顧家庭。',
+    targetSentence: '父母辛勤工作每天用心照顧我們的家。',
     segments: ['父母辛勤工作', '每天', '用心照顧', '我們的家。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -761,7 +761,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_074',
-    targetSentence: '秋天枯黃的樹葉紛紛脫落。',
+    targetSentence: '到了秋天枯黃的樹葉紛紛從樹上脫落下來。',
     segments: ['到了秋天', '枯黃的樹葉', '紛紛從樹上', '脫落下來。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -771,7 +771,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_075',
-    targetSentence: '小動物準備好食物準備過冬。',
+    targetSentence: '聰明的小動物收集好食物準備安心過冬。',
     segments: ['聰明的小動物', '收集好食物', '準備', '安心過冬。'],
     category: 'daily_actions',
     categoryName: '日常生活與動作',
@@ -785,7 +785,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   // ==========================================
   {
     id: 's_076',
-    targetSentence: '多吃新鮮水果蔬菜對身體好。',
+    targetSentence: '多吃新鮮水果和蔬菜對身體健康非常有益。',
     segments: ['多吃新鮮水果', '和蔬菜', '對身體健康', '非常有益。'],
     category: 'objects_food',
     categoryName: '物品與食物',
@@ -795,7 +795,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_077',
-    targetSentence: '吃完甜甜的糖果要及時刷牙。',
+    targetSentence: '吃完甜甜的糖果一定要及時刷牙漱口。',
     segments: ['吃完甜甜的糖果', '一定要', '及時', '刷牙漱口。'],
     category: 'objects_food',
     categoryName: '物品與食物',
@@ -805,7 +805,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_078',
-    targetSentence: '農曆新年全家人一起吃甜年糕。',
+    targetSentence: '農曆新年全家人一起品嚐美味的甜年糕。',
     segments: ['農曆新年', '全家人一起', '品嚐美味的', '甜年糕。'],
     category: 'objects_food',
     categoryName: '物品與食物',
@@ -815,7 +815,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_079',
-    targetSentence: '媽媽幫我洗好了乾淨的衣服。',
+    targetSentence: '辛苦的媽媽幫我洗好整齊乾淨的衣服。',
     segments: ['辛苦的媽媽', '幫我洗好', '整齊乾淨的', '衣服。'],
     category: 'objects_food',
     categoryName: '物品與食物',
@@ -825,7 +825,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_080',
-    targetSentence: '冬天穿上羊毛衣非常保暖。',
+    targetSentence: '寒冷的冬天穿上羊毛衣感覺非常暖和。',
     segments: ['寒冷的冬天', '穿上羊毛衣', '感覺', '非常暖和。'],
     category: 'objects_food',
     categoryName: '物品與食物',
@@ -835,7 +835,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_081',
-    targetSentence: '夏天出門記得戴上遮陽帽子。',
+    targetSentence: '夏天出門的時候記得戴上漂亮的遮陽帽子。',
     segments: ['夏天出門的時候', '記得戴上', '漂亮的', '遮陽帽子。'],
     category: 'objects_food',
     categoryName: '物品與食物',
@@ -845,7 +845,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_082',
-    targetSentence: '小朋友在草地上拍打彩色皮球。',
+    targetSentence: '活潑的小朋友在草地上拍打著彩色皮球。',
     segments: ['活潑的小朋友', '在草地上', '拍打著', '彩色皮球。'],
     category: 'objects_food',
     categoryName: '物品與食物',
@@ -855,7 +855,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_083',
-    targetSentence: '看電視的時間不宜太長。',
+    targetSentence: '看電視節目的時間應該適當不宜過長。',
     segments: ['看電視節目的時間', '應該適當', '不宜', '過長。'],
     category: 'objects_food',
     categoryName: '物品與食物',
@@ -865,7 +865,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_084',
-    targetSentence: '生日那天我收到了心愛的禮物。',
+    targetSentence: '生日的那一天我收到了心愛的生日禮物。',
     segments: ['生日的那一天', '我收到了', '心愛的', '生日禮物。'],
     category: 'objects_food',
     categoryName: '物品與食物',
@@ -875,7 +875,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_085',
-    targetSentence: '山腳下有一座紅色屋頂的房子。',
+    targetSentence: '美麗的山腳下座落著一座漂亮的小房子。',
     segments: ['美麗的山腳下', '座落著一座', '漂亮的', '小房子。'],
     category: 'objects_food',
     categoryName: '物品與食物',
@@ -885,7 +885,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_086',
-    targetSentence: '我們把客廳的地板擦得乾淨明亮。',
+    targetSentence: '我們全家把客廳的地板擦得乾淨明亮。',
     segments: ['我們全家', '把客廳的地板', '擦得', '乾淨明亮。'],
     category: 'objects_food',
     categoryName: '物品與食物',
@@ -895,7 +895,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_087',
-    targetSentence: '打開窗子微風輕輕吹了進來。',
+    targetSentence: '輕輕打開窗子清涼的微風吹了進來。',
     segments: ['輕輕打開窗子', '清涼的微風', '吹了', '進來。'],
     category: 'objects_food',
     categoryName: '物品與食物',
@@ -905,7 +905,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_088',
-    targetSentence: '陽光下我的影子跟著我奔跑。',
+    targetSentence: '在陽光照射下長長的影子緊緊跟著我奔跑。',
     segments: ['在陽光照射下', '長長的影子', '緊緊跟著我', '奔跑。'],
     category: 'objects_food',
     categoryName: '物品與食物',
@@ -915,7 +915,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_089',
-    targetSentence: '把書桌上的所有東西整理整齊。',
+    targetSentence: '請把書桌上的學習東西整理得整整齊齊。',
     segments: ['請把書桌上的', '學習東西', '整理得', '整整齊齊。'],
     category: 'objects_food',
     categoryName: '物品與食物',
@@ -925,7 +925,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_090',
-    targetSentence: '樹林裏傳來小鳥清脆的叫聲。',
+    targetSentence: '安靜的樹林裏傳來小鳥清脆動聽的歌唱聲音。',
     segments: ['安靜的樹林裏', '傳來小鳥', '清脆動聽的', '歌唱聲音。'],
     category: 'objects_food',
     categoryName: '物品與食物',
@@ -939,7 +939,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   // ==========================================
   {
     id: 's_091',
-    targetSentence: '祝你生日快樂天天開心。',
+    targetSentence: '真誠地祝你生日快樂天天都無比開心！',
     segments: ['真誠地祝你', '生日快樂', '天天都', '無比開心！'],
     category: 'feelings_adj',
     categoryName: '感覺與情緒',
@@ -949,7 +949,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_092',
-    targetSentence: '遇到困難要冷靜不要隨便生氣。',
+    targetSentence: '遇到困難時要保持冷靜千萬不要隨便生氣。',
     segments: ['遇到困難時', '要保持冷靜', '千萬不要', '隨便生氣。'],
     category: 'feelings_adj',
     categoryName: '感覺與情緒',
@@ -959,7 +959,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_093',
-    targetSentence: '有父母在身邊我一點也不害怕。',
+    targetSentence: '有親愛的父母在身邊我勇敢堅強一點也不害怕。',
     segments: ['有親愛的父母在身邊', '我勇敢堅強', '一點也', '不害怕。'],
     category: 'feelings_adj',
     categoryName: '感覺與情緒',
@@ -969,7 +969,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_094',
-    targetSentence: '我最喜歡讀有趣的中文故事書。',
+    targetSentence: '我平時最喜歡認真閱讀有趣的中文故事。',
     segments: ['我平時最喜歡', '認真閱讀', '有趣的', '中文故事。'],
     category: 'feelings_adj',
     categoryName: '感覺與情緒',
@@ -979,7 +979,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_095',
-    targetSentence: '花園裏的花朵盛開景色十分美麗。',
+    targetSentence: '花園裏的花朵盛開景色看起來十分漂亮美麗。',
     segments: ['花園裏的花朵盛開', '景色看起來', '十分', '漂亮美麗。'],
     category: 'feelings_adj',
     categoryName: '感覺與情緒',
@@ -989,7 +989,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_096',
-    targetSentence: '小白兔長著長耳朵模樣真可愛。',
+    targetSentence: '毛茸茸的小白兔長著長長耳朵模樣真可愛。',
     segments: ['毛茸茸的小白兔', '長著長長耳朵', '模樣', '真可愛。'],
     category: 'feelings_adj',
     categoryName: '感覺與情緒',
@@ -999,7 +999,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_097',
-    targetSentence: '媽媽煮的熱湯十分香甜美味。',
+    targetSentence: '媽媽煮的熱湯味道濃郁十分香甜美味。',
     segments: ['媽媽煮的熱湯', '味道濃郁', '十分', '香甜美味。'],
     category: 'feelings_adj',
     categoryName: '感覺與情緒',
@@ -1009,7 +1009,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_098',
-    targetSentence: '生病的時候要多喝水多休息。',
+    targetSentence: '身體生病的時候一定要多喝溫水多休息。',
     segments: ['身體生病的時候', '一定要', '多喝溫水', '多休息。'],
     category: 'feelings_adj',
     categoryName: '感覺與情緒',
@@ -1019,7 +1019,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_099',
-    targetSentence: '過馬路一定要小心看清交通燈。',
+    targetSentence: '走過馬路時一定要小心看清楚交通紅綠燈。',
     segments: ['走過馬路時', '一定要小心', '看清楚', '交通紅綠燈。'],
     category: 'feelings_adj',
     categoryName: '感覺與情緒',
@@ -1029,7 +1029,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_100',
-    targetSentence: '睡足八小時今天上學特別有精神。',
+    targetSentence: '睡足八小時之後今天去上學感覺特別有精神！',
     segments: ['睡足八小時之後', '今天去上學', '感覺', '特別有精神！'],
     category: 'feelings_adj',
     categoryName: '感覺與情緒',
@@ -1039,7 +1039,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_101',
-    targetSentence: '大自然充滿了奇妙神奇的變化。',
+    targetSentence: '美麗的大自然到處都充滿了奇妙神奇的變化。',
     segments: ['美麗的大自然', '到處都充滿了', '奇妙神奇的', '變化。'],
     category: 'feelings_adj',
     categoryName: '感覺與情緒',
@@ -1049,7 +1049,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_102',
-    targetSentence: '常說請和謝謝是有禮貌的表現。',
+    targetSentence: '常常說請和謝謝是好孩子有禮貌的優良表現。',
     segments: ['常常說請和謝謝', '是好孩子', '有禮貌的', '優良表現。'],
     category: 'feelings_adj',
     categoryName: '感覺與情緒',
@@ -1059,7 +1059,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_103',
-    targetSentence: '不小心撞到別人要立刻說對不起。',
+    targetSentence: '不小心撞到別人應該要立刻向對方說對不起。',
     segments: ['不小心撞到別人', '應該要立刻', '向對方', '說對不起。'],
     category: 'feelings_adj',
     categoryName: '感覺與情緒',
@@ -1069,7 +1069,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_104',
-    targetSentence: '老師用滿滿的愛心教導我們學習。',
+    targetSentence: '親切的老師用滿滿的愛心教導我們認真學習。',
     segments: ['親切的老師', '用滿滿的愛心', '教導我們', '認真學習。'],
     category: 'feelings_adj',
     categoryName: '感覺與情緒',
@@ -1079,7 +1079,7 @@ export const SCRAMBLE_SENTENCES_DATA: ScrambleSentenceItem[] = [
   },
   {
     id: 's_105',
-    targetSentence: '只要努力練習中文一定能學好。',
+    targetSentence: '只要每天努力練習廣東話中文就一定能學得很好！',
     segments: ['只要每天努力練習', '廣東話中文', '就一定', '能學得很好！'],
     category: 'feelings_adj',
     categoryName: '感覺與情緒',
