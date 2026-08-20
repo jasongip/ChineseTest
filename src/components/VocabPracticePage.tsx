@@ -179,21 +179,6 @@ export const VocabPracticePage: React.FC = () => {
     }
   };
 
-  const handleResetCollection = () => {
-    if (window.confirm('確定要重設寶可夢卡冊進度嗎？（將恢復為只有比卡超 x1）')) {
-      const initial = { 25: 1 };
-      setCardInventory(initial);
-      setAvailablePacks(0);
-      try {
-        localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify(initial));
-        localStorage.setItem(STORAGE_KEY_CARDS, JSON.stringify([25]));
-        localStorage.setItem(STORAGE_KEY_PACKS, '0');
-      } catch {
-        // Ignore
-      }
-    }
-  };
-
   const scrollToBinder = () => {
     const el = document.getElementById('jovan-pokemon-binder');
     if (el) {
@@ -1002,7 +987,6 @@ export const VocabPracticePage: React.FC = () => {
         currentStreak={streak}
         availablePacks={availablePacks}
         onOpenPack={handleManualOpenPack}
-        onResetCollection={handleResetCollection}
       />
 
       {/* GACHA CARD REVEAL MODAL */}

@@ -25,7 +25,6 @@ interface PokemonBinderProps {
   currentStreak: number;
   availablePacks: number;
   onOpenPack: () => void;
-  onResetCollection?: () => void;
 }
 
 export const PokemonBinder: React.FC<PokemonBinderProps> = ({
@@ -34,7 +33,6 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
   currentStreak,
   availablePacks,
   onOpenPack,
-  onResetCollection,
 }) => {
   const [filterRarity, setFilterRarity] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'unlocked' | 'locked'>('all');
@@ -212,14 +210,6 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
             <p className="text-xs text-emerald-300 font-bold leading-tight">
               每次答啱即累積連擊，保持專注！
             </p>
-            {onResetCollection && (
-              <button
-                onClick={onResetCollection}
-                className="text-[10px] text-slate-400 hover:text-red-400 text-left underline mt-1"
-              >
-                重設卡冊進度
-              </button>
-            )}
           </div>
         </div>
       </div>
