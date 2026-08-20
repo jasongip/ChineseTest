@@ -160,9 +160,10 @@ export const PokemonGachaModal: React.FC<PokemonGachaModalProps> = ({
             </button>
             <button
               onClick={onClose}
-              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-1.5"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              繼續特訓賺取更多卡片 <ArrowRight className="w-4 h-4" />
+              <span>收下卡片，繼續答題！</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         ) : (

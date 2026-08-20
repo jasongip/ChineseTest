@@ -65,11 +65,11 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
 
   // Categories list
   const categories = [
-    { id: 'all', name: '全部主題句子 (40+ 句)' },
+    { id: 'all', name: `全部主題 (${SCRAMBLE_SENTENCES_DATA.length} 題)` },
     { id: 'family_people', name: '👨‍👩‍👧‍👦 家庭與人物' },
     { id: 'school_learning', name: '🏫 學校與學習' },
     { id: 'nature_animals', name: '🌿 大自然與動植物' },
-    { id: 'daily_actions', name: '🏃 日常生活與動作' },
+    { id: 'daily_actions', name: '🏃 動作與身體' },
     { id: 'objects_food', name: '🍎 物品與食物' },
     { id: 'feelings_adj', name: '😄 感覺與情緒' },
     { id: 'time_place', name: '⏰ 時間與方位' },
@@ -82,6 +82,7 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
     setQuestions(shuffled);
     setCurrentIndex(0);
     setScore(0);
+    onStreakUpdate(0);
     setWrongQuestions([]);
     setIsQuizCompleted(false);
     if (shuffled.length > 0) {
@@ -178,11 +179,11 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
         speakCantonese(currentQ.targetSentence);
       }, 300);
 
-      // Trigger Pokemon reward every 10 streak
+      // Trigger Pokemon reward immediately every 10 streak (10, 20, 30...)
       if (newStreak > 0 && newStreak % 10 === 0) {
         setTimeout(() => {
           onTriggerPokemon(newStreak);
-        }, 800);
+        }, 500);
       }
     } else {
       audioService.playError();
@@ -234,7 +235,7 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
         {/* Quiz Length */}
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-bold text-slate-500">每輪題數：</span>
-          {[5, 10, 15].map((len) => (
+          {[5, 10, 15, 20].map((len) => (
             <button
               key={len}
               onClick={() => setQuizSize(len)}

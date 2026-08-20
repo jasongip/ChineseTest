@@ -195,6 +195,7 @@ export const VocabPracticePage: React.FC = () => {
     setIsAnswered(false);
     setScore(0);
     setStreak(0);
+    setLastStreakTriggered(0);
     setWrongItems([]);
     setIsQuizCompleted(false);
     setShowExplanation(false);
@@ -263,8 +264,8 @@ export const VocabPracticePage: React.FC = () => {
       const newStreak = streak + 1;
       setStreak(newStreak);
 
-      // Check if streak reaches a multiple of 10 (e.g. 10, 20, 30...)
-      if (newStreak > 0 && newStreak % 10 === 0 && newStreak !== lastStreakTriggered) {
+      // Instantly trigger Pokemon reward every 10 consecutive correct answers (10, 20, 30...)
+      if (newStreak > 0 && newStreak % 10 === 0) {
         setTimeout(() => {
           triggerPokemonDraw(newStreak);
         }, 500);
@@ -272,6 +273,7 @@ export const VocabPracticePage: React.FC = () => {
     } else {
       audioService.playError();
       setStreak(0);
+      setLastStreakTriggered(0);
       if (currentItem && !wrongItems.find((w) => w.id === currentItem.id)) {
         setWrongItems((prev) => [...prev, currentItem]);
       }
