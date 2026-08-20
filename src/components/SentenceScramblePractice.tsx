@@ -178,8 +178,8 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
         speakCantonese(currentQ.targetSentence);
       }, 300);
 
-      // Trigger Pokemon reward every 5 streak
-      if (newStreak > 0 && newStreak % 5 === 0) {
+      // Trigger Pokemon reward every 10 streak
+      if (newStreak > 0 && newStreak % 10 === 0) {
         setTimeout(() => {
           onTriggerPokemon(newStreak);
         }, 800);
@@ -210,17 +210,17 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4">
       {/* FILTER & TOP CONTROLS */}
-      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-2.5">
         {/* Category Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 max-w-full no-scrollbar">
           <span className="text-xs font-bold text-slate-500 shrink-0">主題分類：</span>
           {categories.map((c) => (
             <button
               key={c.id}
               onClick={() => setSelectedCategory(c.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+              className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
                 selectedCategory === c.id
                   ? 'bg-amber-500 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -232,13 +232,13 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
         </div>
 
         {/* Quiz Length */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <span className="text-xs font-bold text-slate-500">每輪題數：</span>
           {[5, 10, 15].map((len) => (
             <button
               key={len}
               onClick={() => setQuizSize(len)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
+              className={`px-2 py-0.5 rounded-lg text-xs font-bold transition ${
                 quizSize === len ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -250,21 +250,21 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
 
       {/* QUIZ MAIN CARD */}
       {!isQuizCompleted && currentQ ? (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-lg relative overflow-hidden">
+        <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-md relative overflow-hidden">
           {/* Top Progress & Streak */}
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+          <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 mb-3">
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-black text-xs">
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 font-black text-xs">
                 重組句子 • 第 {currentIndex + 1} / {questions.length} 題
               </span>
-              <span className="text-xs text-slate-500 font-medium">
+              <span className="text-xs text-slate-500 font-medium hidden sm:inline">
                 主題：{currentQ.categoryName}
               </span>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600">
-                <Flame className="w-4 h-4 fill-amber-500 text-amber-500" />
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 text-xs font-bold text-amber-600">
+                <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
                 <span>連對: <strong>{currentStreak}</strong></span>
               </div>
               <div className="text-xs font-bold text-slate-600">
@@ -274,18 +274,18 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
           </div>
 
           {/* QUESTION PROMPT & VOICE CLUE */}
-          <div className="bg-amber-50/80 rounded-2xl p-4 sm:p-5 border border-amber-200/80 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="bg-amber-50/80 rounded-2xl p-3 sm:p-4 border border-amber-200/80 mb-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-1.5 mb-0.5">
                 <span className="text-xs font-black text-amber-800 uppercase tracking-wide">
-                  🧩 任務：點擊下方字卡，排成通順完整的正確句子
+                  🧩 點擊下方字卡，排成通順完整的正確句子
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-600">
                 🇬🇧 英文意思：<span className="text-slate-800 font-medium italic">{currentQ.english}</span>
               </p>
               {showHint && currentQ.hint && (
-                <p className="text-xs text-amber-700 font-bold mt-1.5 flex items-center gap-1 animate-fade-in">
+                <p className="text-xs text-amber-700 font-bold mt-1 flex items-center gap-1 animate-fade-in">
                   <HelpCircle className="w-3.5 h-3.5 text-amber-600" /> {currentQ.hint}
                 </p>
               )}
@@ -295,7 +295,7 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
               <button
                 type="button"
                 onClick={() => setShowHint(!showHint)}
-                className="px-3 py-2 rounded-xl bg-white hover:bg-amber-100 text-amber-800 text-xs font-bold border border-amber-200 transition-all flex items-center gap-1"
+                className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-amber-100 text-amber-800 text-xs font-bold border border-amber-200 transition-all flex items-center gap-1"
               >
                 <HelpCircle className="w-3.5 h-3.5" />
                 <span>{showHint ? '隱藏提示' : '句型提示'}</span>
@@ -304,44 +304,44 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
               <button
                 type="button"
                 onClick={handlePlayVoicePrompt}
-                className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black shadow-sm transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black shadow-xs transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
               >
                 <Volume2 className="w-4 h-4" />
-                <span>聽讀音提示</span>
+                <span>聽語音提示</span>
               </button>
             </div>
           </div>
 
           {/* SENTENCE BUILDER / PLACED AREA */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
+          <div className="mb-3.5 sm:mb-4">
+            <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-bold text-slate-600 flex items-center gap-1">
                 <span>📝 仔仔組合的句子：</span>
-                <span className="text-[11px] text-slate-400 font-normal">（點擊已放上的字卡可退回）</span>
+                <span className="text-[11px] text-slate-400 font-normal">（點擊字卡退回）</span>
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   disabled={isAnswered || placedTokens.length === 0}
                   onClick={handleUndo}
-                  className="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none flex items-center gap-1"
+                  className="px-2 py-0.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none flex items-center gap-1"
                 >
-                  <Undo2 className="w-3.5 h-3.5" /> 撤銷上一張
+                  <Undo2 className="w-3 h-3" /> 撤銷
                 </button>
                 <button
                   type="button"
                   disabled={isAnswered || placedTokens.length === 0}
                   onClick={handleResetTokens}
-                  className="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none flex items-center gap-1"
+                  className="px-2 py-0.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none flex items-center gap-1"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" /> 重排
+                  <RotateCcw className="w-3 h-3" /> 重排
                 </button>
               </div>
             </div>
 
             {/* Dropped / Placed Token Slots */}
             <div
-              className={`min-h-[96px] sm:min-h-[110px] rounded-2xl p-4 sm:p-5 border-2 transition-all flex flex-wrap items-center gap-2.5 sm:gap-3 ${
+              className={`min-h-[64px] sm:min-h-[76px] rounded-2xl p-2.5 sm:p-3.5 border-2 transition-all flex flex-wrap items-center gap-2 sm:gap-2.5 ${
                 isAnswered
                   ? isCorrect
                     ? 'bg-emerald-50/80 border-emerald-400 ring-2 ring-emerald-400/30'
@@ -352,8 +352,8 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
               }`}
             >
               {placedTokens.length === 0 ? (
-                <div className="text-center text-slate-400 text-xs sm:text-sm font-medium py-4">
-                  👇 請點擊下方的字卡按順序排列句子 👇
+                <div className="text-center text-slate-400 text-xs sm:text-sm font-medium py-2">
+                  👇 請點擊下方字卡按順序排列句子 👇
                 </div>
               ) : (
                 placedTokens.map((token, idx) => (
@@ -362,7 +362,7 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
                     type="button"
                     disabled={isAnswered}
                     onClick={() => handleRemovePlacedToken(token)}
-                    className={`group relative px-4 py-2.5 sm:px-5 sm:py-3 rounded-2xl font-black text-base sm:text-lg tracking-wide transition-all select-none shadow-md flex items-center gap-1.5 ${
+                    className={`group relative px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-black text-sm sm:text-base tracking-wide transition-all select-none shadow-xs flex items-center gap-1 ${
                       isAnswered
                         ? isCorrect
                           ? 'bg-emerald-500 text-white shadow-emerald-200'
@@ -370,7 +370,7 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
                         : 'bg-amber-400 hover:bg-amber-300 text-slate-950 hover:scale-105 active:scale-95'
                     }`}
                   >
-                    <span className="text-[10px] opacity-60 font-mono font-normal mr-0.5">#{idx + 1}</span>
+                    <span className="text-[9px] opacity-60 font-mono font-normal">#{idx + 1}</span>
                     <span>{token.text}</span>
                     {!isAnswered && (
                       <span className="text-xs opacity-0 group-hover:opacity-100 text-slate-900 transition-opacity">✕</span>
@@ -382,20 +382,20 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
           </div>
 
           {/* AVAILABLE WORD CARDS POOL */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-2.5">
+          <div className="mb-4 sm:mb-5">
+            <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-bold text-slate-600">
                 🎴 待選字卡（點擊放上）：
               </label>
-              <span className="text-xs text-slate-400 font-medium">
+              <span className="text-[11px] text-slate-400 font-medium">
                 剩餘 {availableTokens.length} 張
               </span>
             </div>
 
-            <div className="min-h-[80px] p-4 rounded-2xl bg-slate-100/70 border border-slate-200 flex flex-wrap items-center gap-3">
+            <div className="min-h-[64px] p-2.5 sm:p-3.5 rounded-2xl bg-slate-100/70 border border-slate-200 flex flex-wrap items-center gap-2 sm:gap-2.5">
               {availableTokens.length === 0 ? (
-                <div className="w-full text-center text-xs text-emerald-600 font-bold py-2 flex items-center justify-center gap-1">
-                  <CheckCircle2 className="w-4 h-4" /> 所有字卡已全部排上！請點擊「檢查答案」！
+                <div className="w-full text-center text-xs text-emerald-600 font-bold py-1.5 flex items-center justify-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> 所有字卡已全部放上！請點擊「檢查答案」！
                 </div>
               ) : (
                 availableTokens.map((token) => (
@@ -403,7 +403,7 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
                     key={token.id}
                     type="button"
                     onClick={() => handleSelectToken(token)}
-                    className="px-4 py-2.5 sm:px-5 sm:py-3 rounded-2xl bg-white hover:bg-amber-100 border-2 border-amber-300/80 hover:border-amber-400 text-slate-900 font-black text-base sm:text-lg tracking-wide shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all select-none cursor-pointer"
+                    className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white hover:bg-amber-100 border-2 border-amber-300/80 hover:border-amber-400 text-slate-900 font-black text-sm sm:text-base tracking-wide shadow-xs hover:shadow-sm hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all select-none cursor-pointer"
                   >
                     {token.text}
                   </button>
@@ -415,29 +415,29 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
           {/* FEEDBACK & EXPLANATION (AFTER ANSWERED) */}
           {isAnswered && (
             <div
-              className={`p-4 sm:p-5 rounded-2xl mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-scale-up ${
+              className={`p-3 sm:p-4 rounded-2xl mb-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-scale-up ${
                 isCorrect
                   ? 'bg-emerald-100/80 border border-emerald-300 text-emerald-950'
                   : 'bg-rose-100/80 border border-rose-300 text-rose-950'
               }`}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2.5">
                 {isCorrect ? (
-                  <CheckCircle2 className="w-7 h-7 text-emerald-600 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
                 ) : (
-                  <XCircle className="w-7 h-7 text-rose-600 shrink-0 mt-0.5" />
+                  <XCircle className="w-6 h-6 text-rose-600 shrink-0 mt-0.5" />
                 )}
                 <div>
-                  <h4 className="text-base font-black">
+                  <h4 className="text-sm sm:text-base font-black">
                     {isCorrect ? '🎉 答啱咗！好棒！' : '❌ 順序仲有啲小問題，唔緊要！'}
                   </h4>
-                  <div className="text-sm font-bold mt-1 text-slate-800">
+                  <div className="text-xs sm:text-sm font-bold mt-0.5 text-slate-800">
                     正確句子：<span className="text-emerald-700 font-black">{currentQ.targetSentence}</span>
                   </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs font-bold text-slate-500">相關核心詞語：</span>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="text-[11px] font-bold text-slate-500">相關核心詞：</span>
                     {currentQ.keyVocab.map((kv, i) => (
-                      <span key={i} className="px-2 py-0.5 rounded bg-white text-xs font-black text-slate-800 shadow-2xs">
+                      <span key={i} className="px-1.5 py-0.2 rounded bg-white text-[11px] font-black text-slate-800 shadow-2xs">
                         {kv}
                       </span>
                     ))}
@@ -448,26 +448,26 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
               <button
                 type="button"
                 onClick={() => speakCantonese(currentQ.targetSentence)}
-                className="px-4 py-2 rounded-xl bg-white hover:bg-emerald-50 text-slate-800 text-xs font-bold border border-slate-200 shadow-xs flex items-center gap-1.5 shrink-0"
+                className="px-3 py-1.5 rounded-xl bg-white hover:bg-emerald-50 text-slate-800 text-xs font-bold border border-slate-200 shadow-xs flex items-center gap-1 shrink-0"
               >
-                <Volume2 className="w-4 h-4 text-amber-600" />
+                <Volume2 className="w-3.5 h-3.5 text-amber-600" />
                 <span>朗讀正確句子</span>
               </button>
             </div>
           )}
 
           {/* ACTION BUTTON: CHECK OR NEXT */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pt-1">
             {!isAnswered ? (
               <>
                 <div className="text-xs text-slate-500 font-medium">
                   {availableTokens.length > 0 ? (
-                    <span className="text-amber-700 bg-amber-100/70 px-3 py-1.5 rounded-xl border border-amber-200 inline-flex items-center gap-1 font-bold">
-                      ⚠️ 仲有 {availableTokens.length} 張字卡未放上，請全部放上組裝完整句子
+                    <span className="text-amber-700 bg-amber-100/70 px-2.5 py-1 rounded-xl border border-amber-200 inline-flex items-center gap-1 font-bold text-xs">
+                      ⚠️ 仲有 {availableTokens.length} 張字卡未放上
                     </span>
                   ) : (
-                    <span className="text-emerald-700 bg-emerald-100/70 px-3 py-1.5 rounded-xl border border-emerald-200 inline-flex items-center gap-1 font-bold">
-                      ✨ 字卡已全部放上，請點擊右方「檢查答案」！
+                    <span className="text-emerald-700 bg-emerald-100/70 px-2.5 py-1 rounded-xl border border-emerald-200 inline-flex items-center gap-1 font-bold text-xs">
+                      ✨ 字卡已全部放上，請點擊「檢查答案」！
                     </span>
                   )}
                 </div>
@@ -476,9 +476,9 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
                   type="button"
                   disabled={availableTokens.length > 0 || placedTokens.length === 0}
                   onClick={handleCheckAnswer}
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-base shadow-lg shadow-amber-500/25 transition-all disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                  className="w-full sm:w-auto px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-sm sm:text-base shadow-md transition-all disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                 >
-                  <Check className="w-5 h-5" />
+                  <Check className="w-4 h-4" />
                   <span>{availableTokens.length > 0 ? `請放上所有字卡 (${placedTokens.length}/${currentQ.segments.length})` : '檢查答案'}</span>
                 </button>
               </>
@@ -487,10 +487,10 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-base shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 animate-bounce"
+                  className="w-full sm:w-auto px-6 py-2.5 sm:py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm sm:text-base shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 animate-bounce"
                 >
                   <span>{currentIndex + 1 >= questions.length ? '查看重組特訓成績' : '下一題'}</span>
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             )}

@@ -81,7 +81,7 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
     if (isUnlocked) {
       speakCantonese(`${card.nameZh}！${card.type}屬性！`);
     } else {
-      speakCantonese(`這張是未解鎖的神秘卡片，提示：${card.type}屬性！連對五題就可以抽到！`);
+      speakCantonese(`這張是未解鎖的神秘卡片，提示：${card.type}屬性！連對十題就可以抽到！`);
     }
   };
 
@@ -94,19 +94,22 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
               <span className="px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-1 shadow-md shadow-amber-400/30">
                 <Trophy className="w-3.5 h-3.5 fill-slate-950" /> 仔仔專屬成就獎勵
               </span>
               <span className="px-3 py-1 rounded-full bg-slate-800 text-amber-300 font-bold text-xs border border-slate-700">
                 正版寶可夢立繪卡牌
               </span>
+              <span className="px-3 py-1 rounded-full bg-emerald-900/70 text-emerald-300 font-bold text-xs border border-emerald-700/60 flex items-center gap-1">
+                💾 進度已永久儲存（重新整理 Refresh 不會遺失）
+              </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-100 to-amber-400">
               🎒 Jovan 的寶可夢大師集卡冊
             </h2>
             <p className="text-sm text-slate-300 mt-1 max-w-xl">
-              特訓每連續答對 <strong>5 題</strong>，即可解鎖 1 次神秘卡包抽卡機會！越答得多，收集越多神獸與閃卡！
+              特訓每連續答對 <strong>10 題</strong>，即可解鎖 1 次神秘卡包抽卡機會！越答得多，收集越多神獸與閃卡！
             </p>
           </div>
 
@@ -128,16 +131,16 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
               <div className="bg-slate-800/90 backdrop-blur-md rounded-2xl p-3 border border-slate-700 flex flex-col items-center sm:items-end">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300 mb-1.5">
                   <Flame className="w-4 h-4 text-orange-400 fill-orange-400" />
-                  <span>抽卡進度：連對 {currentStreak % 5} / 5 題</span>
+                  <span>抽卡進度：連對 {currentStreak % 10} / 10 題</span>
                 </div>
-                {/* 5-step pip bar */}
-                <div className="flex items-center gap-1.5">
-                  {[1, 2, 3, 4, 5].map((step) => {
-                    const active = (currentStreak % 5) >= step || currentStreak > 0 && currentStreak % 5 === 0;
+                {/* 10-step pip bar */}
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((step) => {
+                    const active = (currentStreak % 10) >= step || (currentStreak > 0 && currentStreak % 10 === 0);
                     return (
                       <div
                         key={step}
-                        className={`w-7 h-2.5 rounded-full transition-all ${
+                        className={`w-4 sm:w-5 h-2.5 rounded-full transition-all ${
                           active
                             ? 'bg-gradient-to-r from-amber-400 to-orange-500 shadow-xs shadow-amber-400/50'
                             : 'bg-slate-700'
@@ -147,7 +150,7 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
                   })}
                 </div>
                 <span className="text-[10px] text-slate-400 mt-1">
-                  再答對 {5 - (currentStreak % 5)} 題即可獲得下一張寶可夢卡！
+                  再答對 {10 - (currentStreak % 10)} 題即可獲得下一張寶可夢卡！
                 </span>
               </div>
             )}
