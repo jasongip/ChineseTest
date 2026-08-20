@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { VOCAB_PRACTICE_LIST, VOCAB_CATEGORIES, VocabItem } from '../data/vocabPracticeList';
-import { JiugonggeCanvas } from './JiugonggeCanvas';
+import { POKEMON_CARDS_DATA, PokemonCardData } from '../data/pokemonCards';
+import { PokemonBinder } from './PokemonBinder';
+import { PokemonGachaModal } from './PokemonGachaModal';
+import { SentenceScramblePractice } from './SentenceScramblePractice';
 import { speakCantonese, audioService } from '../utils/audio';
 import {
   Volume2,
@@ -19,13 +22,16 @@ import {
   Layers,
   ArrowRight,
   Eye,
-  PenTool,
   Check,
   RefreshCw,
   Trophy,
+  Gift,
 } from 'lucide-react';
 
-type PracticeMode = 'mode_audio' | 'mode_missing' | 'mode_english' | 'mode_writing' | 'mode_library';
+type PracticeMode = 'mode_audio' | 'mode_missing' | 'mode_english' | 'mode_scramble' | 'mode_library';
+
+const STORAGE_KEY_CARDS = 'jovan_pokemon_collection_v1';
+const STORAGE_KEY_PACKS = 'jovan_pokemon_unopened_packs_v1';
 
 export const VocabPracticePage: React.FC = () => {
   const [activeMode, setActiveMode] = useState<PracticeMode>('mode_audio');
@@ -44,11 +50,111 @@ export const VocabPracticePage: React.FC = () => {
   const [isQuizCompleted, setIsQuizCompleted] = useState<boolean>(false);
   const [showExplanation, setShowExplanation] = useState<boolean>(false);
 
+  // Pokemon Rewards State
+  const [unlockedCardIds, setUnlockedCardIds] = useState<number[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_CARDS);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // Ignore
+    }
+    // Starter reward: Pikachu (#25)
+    return [25];
+  });
+
+  const [availablePacks, setAvailablePacks] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_PACKS);
+      if (saved) {
+        return parseInt(saved, 10) || 0;
+      }
+    } catch {
+      // Ignore
+    }
+    return 0;
+  });
+
+  const [gachaModalOpen, setGachaModalOpen] = useState<boolean>(false);
+  const [drawnCard, setDrawnCard] = useState<PokemonCardData | null>(null);
+  const [isNewCard, setIsNewCard] = useState<boolean>(false);
+  const [lastStreakTriggered, setLastStreakTriggered] = useState<number>(0);
+
   // Missing char mode state: which index is blank (0 or 1 etc)
   const [blankIndex, setBlankIndex] = useState<number>(1);
 
-  // Mode 4 Writing state: reveal answer toggle
-  const [isWritingRevealed, setIsWritingRevealed] = useState<boolean>(false);
+  // Trigger Pokemon Gacha Draw
+  const triggerPokemonDraw = (streakNum: number = 5) => {
+    const lockedPool = POKEMON_CARDS_DATA.filter((c) => !unlockedCardIds.includes(c.id));
+    
+    let chosen: PokemonCardData;
+    let isNew = false;
+
+    if (lockedPool.length > 0) {
+      // If streak is multiple of 10 or 15, favor SSR / UR cards
+      if (streakNum >= 10 && lockedPool.some((c) => c.rarity === 'SSR')) {
+        const ssrPool = lockedPool.filter((c) => c.rarity === 'SSR');
+        chosen = ssrPool[Math.floor(Math.random() * ssrPool.length)];
+      } else {
+        chosen = lockedPool[Math.floor(Math.random() * lockedPool.length)];
+      }
+      isNew = true;
+      const nextUnlocked = [...unlockedCardIds, chosen.id];
+      setUnlockedCardIds(nextUnlocked);
+      try {
+        localStorage.setItem(STORAGE_KEY_CARDS, JSON.stringify(nextUnlocked));
+      } catch {
+        // Ignore
+      }
+    } else {
+      // All collected, draw random card with high holographic chance
+      chosen = POKEMON_CARDS_DATA[Math.floor(Math.random() * POKEMON_CARDS_DATA.length)];
+      isNew = false;
+    }
+
+    setDrawnCard(chosen);
+    setIsNewCard(isNew);
+    setGachaModalOpen(true);
+    setLastStreakTriggered(streakNum);
+  };
+
+  const handleManualOpenPack = () => {
+    if (availablePacks > 0) {
+      const nextPacks = Math.max(0, availablePacks - 1);
+      setAvailablePacks(nextPacks);
+      try {
+        localStorage.setItem(STORAGE_KEY_PACKS, String(nextPacks));
+      } catch {
+        // Ignore
+      }
+      triggerPokemonDraw(5);
+    } else {
+      triggerPokemonDraw(5);
+    }
+  };
+
+  const handleResetCollection = () => {
+    if (window.confirm('確定要重設寶可夢卡冊進度嗎？（將恢復為只有比卡超）')) {
+      const initial = [25];
+      setUnlockedCardIds(initial);
+      setAvailablePacks(0);
+      try {
+        localStorage.setItem(STORAGE_KEY_CARDS, JSON.stringify(initial));
+        localStorage.setItem(STORAGE_KEY_PACKS, '0');
+      } catch {
+        // Ignore
+      }
+    }
+  };
+
+  const scrollToBinder = () => {
+    const el = document.getElementById('jovan-pokemon-binder');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   // Filtered master list
   const filteredVocabList = useMemo(() => {
@@ -78,7 +184,6 @@ export const VocabPracticePage: React.FC = () => {
     setWrongItems([]);
     setIsQuizCompleted(false);
     setShowExplanation(false);
-    setIsWritingRevealed(false);
 
     // Randomize blank index for missing char mode
     setBlankIndex(Math.random() > 0.5 ? 1 : 0);
@@ -141,7 +246,15 @@ export const VocabPracticePage: React.FC = () => {
     if (option.isCorrect) {
       audioService.playSuccess();
       setScore((prev) => prev + 1);
-      setStreak((prev) => prev + 1);
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+
+      // Check if streak reaches a multiple of 5 (e.g. 5, 10, 15, 20...)
+      if (newStreak > 0 && newStreak % 5 === 0 && newStreak !== lastStreakTriggered) {
+        setTimeout(() => {
+          triggerPokemonDraw(newStreak);
+        }, 500);
+      }
     } else {
       audioService.playError();
       setStreak(0);
@@ -164,13 +277,24 @@ export const VocabPracticePage: React.FC = () => {
     if (currentIndex + 1 >= quizQuestions.length) {
       setIsQuizCompleted(true);
       audioService.playCelebration();
+      // If achieved high score (>=80%), grant +1 bonus pack if not already awarded
+      if (score + (selectedAnswer && currentOptions.find(o => o.id === selectedAnswer)?.isCorrect ? 1 : 0) >= quizQuestions.length * 0.8) {
+        setAvailablePacks((prev) => {
+          const next = prev + 1;
+          try {
+            localStorage.setItem(STORAGE_KEY_PACKS, String(next));
+          } catch {
+            // Ignore
+          }
+          return next;
+        });
+      }
     } else {
       const nextIdx = currentIndex + 1;
       setCurrentIndex(nextIdx);
       setSelectedAnswer(null);
       setIsAnswered(false);
       setShowExplanation(false);
-      setIsWritingRevealed(false);
       setBlankIndex(Math.random() > 0.5 ? 1 : 0);
 
       // Auto play audio for next question
@@ -180,22 +304,6 @@ export const VocabPracticePage: React.FC = () => {
         }, 200);
       }
     }
-  };
-
-  // Writing Mode: mark self as correct or wrong
-  const handleWritingFeedback = (isCorrect: boolean) => {
-    if (isCorrect) {
-      audioService.playSuccess();
-      setScore((prev) => prev + 1);
-      setStreak((prev) => prev + 1);
-    } else {
-      audioService.playError();
-      setStreak(0);
-      if (currentItem && !wrongItems.find((w) => w.id === currentItem.id)) {
-        setWrongItems((prev) => [...prev, currentItem]);
-      }
-    }
-    handleNext();
   };
 
   const handleSpeakCurrent = () => {
@@ -224,7 +332,7 @@ export const VocabPracticePage: React.FC = () => {
           </div>
 
           {/* Quick Stats in Header */}
-          <div className="flex items-center gap-3 bg-white/15 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/25">
+          <div className="flex flex-wrap items-center gap-3 bg-white/15 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/25">
             <div className="text-center px-2">
               <div className="text-xs text-amber-100 font-bold">總詞庫</div>
               <div className="text-xl sm:text-2xl font-black font-mono">{VOCAB_PRACTICE_LIST.length}</div>
@@ -241,6 +349,16 @@ export const VocabPracticePage: React.FC = () => {
               </div>
               <div className="text-xl sm:text-2xl font-black font-mono text-yellow-300">{streak}</div>
             </div>
+            <div className="h-8 w-[1px] bg-white/30 hidden sm:block" />
+            {/* Pokemon Collection quick button */}
+            <button
+              type="button"
+              onClick={scrollToBinder}
+              className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+            >
+              <Trophy className="w-3.5 h-3.5 fill-slate-950" />
+              <span>寶可夢卡冊 ({unlockedCardIds.length}/{POKEMON_CARDS_DATA.length})</span>
+            </button>
           </div>
         </div>
       </div>
@@ -252,7 +370,7 @@ export const VocabPracticePage: React.FC = () => {
             { id: 'mode_audio' as PracticeMode, num: '1', title: '聽音四揀一', desc: '粵語發音選中文字', icon: '🎧' },
             { id: 'mode_missing' as PracticeMode, num: '2', title: '缺字填空', desc: '填補詞語缺失漢字', icon: '🧩' },
             { id: 'mode_english' as PracticeMode, num: '3', title: '英文對照', desc: '英文釋義選中文詞', icon: '🇬🇧' },
-            { id: 'mode_writing' as PracticeMode, num: '4', title: '九宮格手寫', desc: '聽音臨摹書寫漢字', icon: '✍️' },
+            { id: 'mode_scramble' as PracticeMode, num: '4', title: '重組句子', desc: '字卡排列通順句子', icon: '✍️' },
             { id: 'mode_library' as PracticeMode, num: '5', title: '詞庫總覽點讀', desc: '180+ 詞彙速查點讀', icon: '📚' },
           ].map((mode) => {
             const isActive = activeMode === mode.id;
@@ -289,8 +407,8 @@ export const VocabPracticePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Filter and Settings Bar */}
-      {activeMode !== 'mode_library' && (
+      {/* Filter and Settings Bar (For Modes 1, 2, 3) */}
+      {activeMode !== 'mode_library' && activeMode !== 'mode_scramble' && (
         <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
           {/* Category Filter Chips */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-2xl no-scrollbar">
@@ -431,6 +549,13 @@ export const VocabPracticePage: React.FC = () => {
             ))}
           </div>
         </div>
+      ) : activeMode === 'mode_scramble' ? (
+        /* MODE 4: SENTENCE SCRAMBLE PRACTICE (重組句子) */
+        <SentenceScramblePractice
+          onStreakUpdate={(newStreak) => setStreak(newStreak)}
+          onTriggerPokemon={(streakNum) => triggerPokemonDraw(streakNum)}
+          currentStreak={streak}
+        />
       ) : isQuizCompleted ? (
         /* QUIZ COMPLETED SCREEN */
         <div className="bg-white rounded-3xl p-8 sm:p-12 text-center border border-slate-200 shadow-md max-w-2xl mx-auto space-y-6">
@@ -484,12 +609,32 @@ export const VocabPracticePage: React.FC = () => {
           )}
 
           {/* Action buttons */}
-          <div className="flex items-center justify-center gap-3 pt-2">
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            {availablePacks > 0 && (
+              <button
+                type="button"
+                onClick={handleManualOpenPack}
+                className="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-sm shadow-lg shadow-amber-400/30 transition flex items-center gap-2 animate-bounce cursor-pointer"
+              >
+                <Gift className="w-4 h-4 fill-slate-950" />
+                <span>拆開獎勵卡包 ({availablePacks})</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={scrollToBinder}
+              className="px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md transition flex items-center gap-2 cursor-pointer"
+            >
+              <Trophy className="w-4 h-4 text-amber-400" />
+              <span>查看寶可夢集卡冊 ({unlockedCardIds.length}/{POKEMON_CARDS_DATA.length})</span>
+            </button>
+
             {wrongItems.length > 0 && (
               <button
                 type="button"
                 onClick={() => startQuiz(wrongItems)}
-                className="px-5 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-md transition flex items-center gap-2"
+                className="px-5 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-md transition flex items-center gap-2 cursor-pointer"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>專項複習這 {wrongItems.length} 個錯詞</span>
@@ -499,7 +644,7 @@ export const VocabPracticePage: React.FC = () => {
             <button
               type="button"
               onClick={() => startQuiz()}
-              className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm shadow-md transition flex items-center gap-2"
+              className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm shadow-md transition flex items-center gap-2 cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
               <span>換一組新題目</span>
@@ -631,156 +776,60 @@ export const VocabPracticePage: React.FC = () => {
                 )}
               </div>
             )}
-
-            {/* TYPE 4: 發音九宮格書寫 */}
-            {activeMode === 'mode_writing' && (
-              <div className="space-y-4">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-200/60 text-amber-900 text-xs font-bold">
-                  <span>✍️ 第四題型：聽發音，在九宮格中寫出該詞語</span>
-                </div>
-
-                <div className="flex items-center justify-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleSpeakCurrent}
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-base shadow-md cursor-pointer"
-                  >
-                    <Volume2 className="w-5 h-5 animate-pulse" />
-                    <span>再聽一次發音 🔊</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      audioService.playClick();
-                      setIsWritingRevealed(!isWritingRevealed);
-                    }}
-                    className={`px-4 py-3 rounded-2xl font-bold text-xs sm:text-sm border transition flex items-center gap-1.5 ${
-                      isWritingRevealed
-                        ? 'bg-amber-100 text-amber-900 border-amber-300'
-                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Eye className="w-4 h-4" />
-                    <span>{isWritingRevealed ? '隱藏標準答案' : '揭曉標準答案'}</span>
-                  </button>
-                </div>
-
-                {/* Revealed Answer Box */}
-                {isWritingRevealed && (
-                  <div className="bg-white p-4 rounded-2xl border border-amber-200 inline-block shadow-sm animate-fadeIn">
-                    <div className="text-3xl font-bold font-serif text-amber-900">{currentItem.word}</div>
-                    <div className="text-xs font-mono text-slate-500 mt-0.5">{currentItem.jyutping} • {currentItem.english}</div>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
           {/* 4-CHOICE OPTIONS GRID (FOR MODES 1, 2, 3) */}
-          {activeMode !== 'mode_writing' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              {currentOptions.map((opt, idx) => {
-                const isSelected = selectedAnswer === opt.id;
-                const isCorrect = opt.isCorrect;
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            {currentOptions.map((opt, idx) => {
+              const isSelected = selectedAnswer === opt.id;
+              const isCorrect = opt.isCorrect;
 
-                let btnStyle = 'bg-slate-50 border-slate-200 hover:bg-amber-50 hover:border-amber-300 text-slate-800';
+              let btnStyle = 'bg-slate-50 border-slate-200 hover:bg-amber-50 hover:border-amber-300 text-slate-800';
 
-                if (isAnswered) {
-                  if (isCorrect) {
-                    btnStyle = 'bg-emerald-50 border-emerald-400 text-emerald-900 ring-2 ring-emerald-200 font-bold';
-                  } else if (isSelected) {
-                    btnStyle = 'bg-rose-50 border-rose-300 text-rose-900 ring-2 ring-rose-200';
-                  } else {
-                    btnStyle = 'bg-slate-50/50 border-slate-200 text-slate-400 opacity-60';
-                  }
+              if (isAnswered) {
+                if (isCorrect) {
+                  btnStyle = 'bg-emerald-50 border-emerald-400 text-emerald-900 ring-2 ring-emerald-200 font-bold';
+                } else if (isSelected) {
+                  btnStyle = 'bg-rose-50 border-rose-300 text-rose-900 ring-2 ring-rose-200';
+                } else {
+                  btnStyle = 'bg-slate-50/50 border-slate-200 text-slate-400 opacity-60';
                 }
+              }
 
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    id={`choice-opt-${idx}`}
-                    disabled={isAnswered}
-                    onClick={() => handleSelectOption(opt)}
-                    className={`p-4 sm:p-5 rounded-2xl border-2 text-left transition-all flex items-center justify-between cursor-pointer disabled:cursor-default ${btnStyle}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-bold text-xs text-slate-500 shadow-sm">
-                        {String.fromCharCode(65 + idx)}
-                      </span>
-                      <div>
-                        <div className="text-2xl sm:text-3xl font-bold font-serif text-slate-800">
-                          {opt.text}
-                        </div>
-                        {isAnswered && 'jyutping' in opt && opt.jyutping && (
-                          <div className="text-xs font-mono text-slate-400">{opt.jyutping}</div>
-                        )}
-                      </div>
-                    </div>
-
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  id={`choice-opt-${idx}`}
+                  disabled={isAnswered}
+                  onClick={() => handleSelectOption(opt)}
+                  className={`p-4 sm:p-5 rounded-2xl border-2 text-left transition-all flex items-center justify-between cursor-pointer disabled:cursor-default ${btnStyle}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-bold text-xs text-slate-500 shadow-sm">
+                      {String.fromCharCode(65 + idx)}
+                    </span>
                     <div>
-                      {isAnswered && isCorrect && <CheckCircle2 className="w-6 h-6 text-emerald-600" />}
-                      {isAnswered && isSelected && !isCorrect && <XCircle className="w-6 h-6 text-rose-500" />}
+                      <div className="text-2xl sm:text-3xl font-bold font-serif text-slate-800">
+                        {opt.text}
+                      </div>
+                      {isAnswered && 'jyutping' in opt && opt.jyutping && (
+                        <div className="text-xs font-mono text-slate-400">{opt.jyutping}</div>
+                      )}
                     </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* MODE 4: NINE-GRID CANVAS LIST (for writing mode) */}
-          {activeMode === 'mode_writing' && (
-            <div className="space-y-4">
-              <div className="text-xs font-bold text-slate-400 text-center uppercase tracking-wider">
-                請在下方九宮格中書寫每個漢字（支持臨摹提示與筆劃重寫）：
-              </div>
-
-              <div className="flex flex-wrap justify-center gap-6">
-                {currentItem.chars.map((char, charIdx) => (
-                  <div key={charIdx} className="flex flex-col items-center">
-                    <div className="text-xs font-bold text-amber-800 mb-1">
-                      第 {charIdx + 1} 個字
-                    </div>
-                    <JiugonggeCanvas
-                      character={char}
-                      size={260}
-                      showWatermarkDefault={isWritingRevealed}
-                    />
                   </div>
-                ))}
-              </div>
 
-              {/* Self-Assessment buttons for Writing mode */}
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <span className="text-xs text-slate-600 font-bold">
-                  書寫完畢後，核對標準字形並為自己打分：
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleWritingFeedback(false)}
-                    className="px-4 py-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold border border-rose-200 transition flex items-center gap-1"
-                  >
-                    <XCircle className="w-4 h-4" />
-                    <span>需要再練 (記為錯詞)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleWritingFeedback(true)}
-                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>寫得端正全對！下一題</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+                  <div>
+                    {isAnswered && isCorrect && <CheckCircle2 className="w-6 h-6 text-emerald-600" />}
+                    {isAnswered && isSelected && !isCorrect && <XCircle className="w-6 h-6 text-rose-500" />}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
 
           {/* EXPLANATION & NEXT STEP BAR (AFTER ANSWERED) */}
-          {isAnswered && activeMode !== 'mode_writing' && (
+          {isAnswered && (
             <div className="bg-amber-50/70 border border-amber-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fadeIn">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
@@ -810,6 +859,25 @@ export const VocabPracticePage: React.FC = () => {
           )}
         </div>
       ) : null}
+
+      {/* JOVAN'S POKEMON CARD COLLECTION BINDER (PLACED AT BOTTOM) */}
+      <PokemonBinder
+        unlockedCardIds={unlockedCardIds}
+        currentStreak={streak}
+        availablePacks={availablePacks}
+        onOpenPack={handleManualOpenPack}
+        onResetCollection={handleResetCollection}
+      />
+
+      {/* GACHA CARD REVEAL MODAL */}
+      <PokemonGachaModal
+        isOpen={gachaModalOpen}
+        onClose={() => setGachaModalOpen(false)}
+        drawnCard={drawnCard}
+        isNewCard={isNewCard}
+        streakCount={lastStreakTriggered || 5}
+        onViewBinder={scrollToBinder}
+      />
     </div>
   );
 };
