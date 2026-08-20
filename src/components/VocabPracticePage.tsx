@@ -204,8 +204,8 @@ export const VocabPracticePage: React.FC = () => {
     // Randomize blank index for missing char mode
     setBlankIndex(Math.random() > 0.5 ? 1 : 0);
 
-    // Auto pronounce first question if audio mode or writing mode
-    if (selected.length > 0) {
+    // Only auto pronounce in audio listening mode (mode 1)
+    if (activeMode === 'mode_audio' && selected.length > 0) {
       setTimeout(() => {
         speakCantonese(selected[0].word);
       }, 300);
@@ -305,8 +305,8 @@ export const VocabPracticePage: React.FC = () => {
       setShowExplanation(false);
       setBlankIndex(Math.random() > 0.5 ? 1 : 0);
 
-      // Auto play audio for next question
-      if (quizQuestions[nextIdx]) {
+      // Auto play audio for next question ONLY in listening mode (mode 1)
+      if (activeMode === 'mode_audio' && quizQuestions[nextIdx]) {
         setTimeout(() => {
           speakCantonese(quizQuestions[nextIdx].word);
         }, 200);

@@ -95,13 +95,6 @@ export const ReadingComprehensionPractice: React.FC<ReadingComprehensionPractice
     setRoundScore(0);
     setWrongItems([]);
     setIsQuizCompleted(false);
-
-    // Auto read the first passage
-    if (shuffled.length > 0) {
-      setTimeout(() => {
-        speakCantonese(shuffled[0].passage);
-      }, 300);
-    }
   };
 
   useEffect(() => {
@@ -169,12 +162,6 @@ export const ReadingComprehensionPractice: React.FC<ReadingComprehensionPractice
       setCurrentIndex(nextIdx);
       setSelectedAnswerIdx(null);
       setIsAnswered(false);
-
-      if (questions[nextIdx]) {
-        setTimeout(() => {
-          speakCantonese(questions[nextIdx].passage);
-        }, 200);
-      }
     }
   };
 
