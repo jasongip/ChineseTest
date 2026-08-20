@@ -201,34 +201,67 @@ class AudioManager {
 
 export const audioService = new AudioManager();
 
-// Speech Synthesis for Cantonese (zh-HK)
+// Speech Synthesis for Cantonese (zh-HK / yue-HK / zh-YUE)
+export function getCantoneseVoice(): SpeechSynthesisVoice | null {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices || voices.length === 0) return null;
+
+  // 1. Strict Cantonese voice check (iOS Safari, Mac, Chrome, Edge)
+  // Apple iOS voices: Sin-ji, Tracy, Danny, Cantonese, zh-HK, yue-HK, zh-YUE
+  const cantoneseVoice = voices.find((v) => {
+    const lang = (v.lang || '').toLowerCase().replace('_', '-');
+    const name = (v.name || '').toLowerCase();
+    
+    // Explicit language tag matching Cantonese
+    if (lang === 'zh-hk' || lang === 'yue-hk' || lang === 'zh-yue' || lang === 'yue-hant-hk' || lang.startsWith('yue')) {
+      return true;
+    }
+    // Name matching Apple iOS / iPadOS Cantonese voices
+    if (name.includes('cantonese') || name.includes('hong kong') || name.includes('廣東話') || name.includes('粵語') || name.includes('sin-ji') || name.includes('sinji') || name.includes('hiuyu')) {
+      return true;
+    }
+    return false;
+  });
+
+  if (cantoneseVoice) return cantoneseVoice;
+
+  // 2. Secondary check for zh-HK in lang string
+  const secondaryVoice = voices.find((v) => {
+    const lang = (v.lang || '').toLowerCase().replace('_', '-');
+    return lang.includes('zh-hk') || lang.includes('yue');
+  });
+
+  return secondaryVoice || null;
+}
+
 export function speakCantonese(text: string, onEnd?: () => void) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
     if (onEnd) onEnd();
     return;
   }
 
-  window.speechSynthesis.cancel(); // Stop any pending speech
+  // iOS Safari audio activation fix: ensure synthesis is active
+  window.speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);
   
-  // Try to find Cantonese (zh-HK / zh-YUE) voice
-  const voices = window.speechSynthesis.getVoices();
-  const cantoneseVoice = voices.find(
-    (v) => v.lang === 'zh-HK' || v.lang === 'yue-Hant-HK' || v.lang.includes('zh-HK') || v.name.includes('Hong Kong') || v.name.includes('Cantonese')
-  ) || voices.find(v => v.lang.startsWith('zh'));
-
-  if (cantoneseVoice) {
-    utterance.voice = cantoneseVoice;
-  }
+  // Set explicit BCP 47 language code for Cantonese
   utterance.lang = 'zh-HK';
   utterance.rate = 0.85; // Slightly slower for clarity in children's assessment
   utterance.pitch = 1.05;
+
+  const targetVoice = getCantoneseVoice();
+  if (targetVoice) {
+    utterance.voice = targetVoice;
+    utterance.lang = targetVoice.lang || 'zh-HK';
+  }
 
   if (onEnd) {
     utterance.onend = onEnd;
     utterance.onerror = onEnd;
   }
 
+  // Speak with slight delay for iOS Safari if just cancelled
   window.speechSynthesis.speak(utterance);
 }
