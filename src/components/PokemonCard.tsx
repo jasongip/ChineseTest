@@ -109,7 +109,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
             />
           </div>
           <p className="mt-3 text-xs font-medium text-slate-300">？？？</p>
-          <span className="text-[11px] text-amber-400/80 font-bold mt-1">連對 5 題解鎖</span>
+          <span className="text-[11px] text-amber-400/80 font-bold mt-1">連對 10 題解鎖</span>
         </div>
 
         <div className="w-full pt-2 border-t border-slate-800 text-[10px] text-slate-300">

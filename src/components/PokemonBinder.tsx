@@ -128,29 +128,32 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
                 <Sparkles className="w-4 h-4 fill-slate-950" />
               </button>
             ) : (
-              <div className="bg-slate-800/90 backdrop-blur-md rounded-2xl p-3 border border-slate-700 flex flex-col items-center sm:items-end">
+              <div className="bg-slate-800/90 backdrop-blur-md rounded-2xl p-3.5 border border-slate-700 flex flex-col items-center sm:items-end shadow-md">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300 mb-1.5">
-                  <Flame className="w-4 h-4 text-orange-400 fill-orange-400" />
-                  <span>抽卡進度：連對 {currentStreak % 10} / 10 題</span>
+                  <Flame className="w-4 h-4 text-orange-400 fill-orange-400 animate-pulse" />
+                  <span>抽卡特訓：連對 {(currentStreak > 0 && currentStreak % 10 === 0) ? 10 : (currentStreak % 10)} / 10 題</span>
                 </div>
                 {/* 10-step pip bar */}
                 <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((step) => {
-                    const active = (currentStreak % 10) >= step || (currentStreak > 0 && currentStreak % 10 === 0);
+                    const currentStep = (currentStreak > 0 && currentStreak % 10 === 0) ? 10 : (currentStreak % 10);
+                    const active = currentStep >= step;
                     return (
                       <div
                         key={step}
-                        className={`w-4 sm:w-5 h-2.5 rounded-full transition-all ${
+                        className={`w-4 sm:w-5 h-2.5 rounded-full transition-all duration-300 ${
                           active
-                            ? 'bg-gradient-to-r from-amber-400 to-orange-500 shadow-xs shadow-amber-400/50'
-                            : 'bg-slate-700'
+                            ? 'bg-gradient-to-r from-amber-400 to-orange-500 shadow-xs shadow-amber-400/50 scale-105'
+                            : 'bg-slate-700/80'
                         }`}
                       />
                     );
                   })}
                 </div>
-                <span className="text-[10px] text-slate-400 mt-1">
-                  再答對 {10 - (currentStreak % 10)} 題即可獲得下一張寶可夢卡！
+                <span className="text-[11px] text-amber-200/90 font-medium mt-1.5">
+                  {((currentStreak > 0 && currentStreak % 10 === 0) ? 0 : (10 - (currentStreak % 10))) === 0
+                    ? '🎉 已達成連對 10 題，即將解鎖新卡片！'
+                    : `再連續答對 ${10 - (currentStreak % 10)} 題即可抽寶可夢卡！`}
                 </span>
               </div>
             )}

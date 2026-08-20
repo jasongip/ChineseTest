@@ -146,8 +146,6 @@ export const VocabPracticePage: React.FC = () => {
       const nextPacks = Math.max(0, availablePacks - 1);
       setAvailablePacks(nextPacks);
       triggerPokemonDraw(10);
-    } else {
-      triggerPokemonDraw(10);
     }
   };
 
@@ -293,18 +291,6 @@ export const VocabPracticePage: React.FC = () => {
     if (currentIndex + 1 >= quizQuestions.length) {
       setIsQuizCompleted(true);
       audioService.playCelebration();
-      // If achieved high score (>=80%), grant +1 bonus pack if not already awarded
-      if (score + (selectedAnswer && currentOptions.find(o => o.id === selectedAnswer)?.isCorrect ? 1 : 0) >= quizQuestions.length * 0.8) {
-        setAvailablePacks((prev) => {
-          const next = prev + 1;
-          try {
-            localStorage.setItem(STORAGE_KEY_PACKS, String(next));
-          } catch {
-            // Ignore
-          }
-          return next;
-        });
-      }
     } else {
       const nextIdx = currentIndex + 1;
       setCurrentIndex(nextIdx);
