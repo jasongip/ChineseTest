@@ -4,7 +4,7 @@ export const INITIAL_CANDIDATE: CandidateInfo = {
   nameEn: 'Jovan Ng',
   nameZh: '伍博睿',
   age: 6,
-  schoolTarget: 'MKCSCC 廣東話中級班入學模擬測驗',
+  schoolTarget: '廣東話中級班入學模擬測驗',
   totalTimeMinutes: 60,
   testDate: new Date().toISOString().split('T')[0],
 };

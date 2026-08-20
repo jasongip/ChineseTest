@@ -124,13 +124,18 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
   const handleSelectToken = (token: { id: string; text: string }) => {
     if (isAnswered) return;
     audioService.playPop();
+    speakCantonese(token.text);
     setAvailableTokens((prev) => prev.filter((t) => t.id !== token.id));
     setPlacedTokens((prev) => [...prev, token]);
   };
 
-  // User clicks a placed card -> return to available
+  // User clicks a placed card -> return to available, or pronounce when answered
   const handleRemovePlacedToken = (token: { id: string; text: string }) => {
-    if (isAnswered) return;
+    if (isAnswered) {
+      audioService.playPop();
+      speakCantonese(token.text);
+      return;
+    }
     audioService.playPop();
     setPlacedTokens((prev) => prev.filter((t) => t.id !== token.id));
     setAvailableTokens((prev) => [...prev, token]);
@@ -361,20 +366,22 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
                   <button
                     key={token.id}
                     type="button"
-                    disabled={isAnswered}
                     onClick={() => handleRemovePlacedToken(token)}
-                    className={`group relative px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-black text-sm sm:text-base tracking-wide transition-all select-none shadow-xs flex items-center gap-1 ${
+                    title={isAnswered ? `點擊聆聽「${token.text}」發音` : '點擊放回待選區'}
+                    className={`group relative px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-black text-sm sm:text-base tracking-wide transition-all select-none shadow-xs flex items-center gap-1 cursor-pointer active:scale-95 ${
                       isAnswered
                         ? isCorrect
-                          ? 'bg-emerald-500 text-white shadow-emerald-200'
-                          : 'bg-rose-500 text-white shadow-rose-200'
-                        : 'bg-amber-400 hover:bg-amber-300 text-slate-950 hover:scale-105 active:scale-95'
+                          ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200'
+                          : 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-200'
+                        : 'bg-amber-400 hover:bg-amber-300 text-slate-950 hover:scale-105'
                     }`}
                   >
                     <span className="text-[9px] opacity-60 font-mono font-normal">#{idx + 1}</span>
                     <span>{token.text}</span>
-                    {!isAnswered && (
+                    {!isAnswered ? (
                       <span className="text-xs opacity-0 group-hover:opacity-100 text-slate-900 transition-opacity">✕</span>
+                    ) : (
+                      <Volume2 className="w-3 h-3 opacity-80" />
                     )}
                   </button>
                 ))

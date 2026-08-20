@@ -8,28 +8,26 @@ import { VocabPracticePage } from './components/VocabPracticePage';
 import { DailyPracticeGame } from './components/DailyPracticeGame';
 import { PrintablePaper } from './components/PrintablePaper';
 import { AssessmentReport } from './components/AssessmentReport';
+import { PasswordAuthModal } from './components/PasswordAuthModal';
 import { audioService } from './utils/audio';
-import {
-  Mic,
-  BookOpen,
-  Printer,
-  Sparkles,
-  Award,
-  Clock,
-  User,
-  CheckCircle2,
-  Calendar,
-  Layers,
-  Flame,
-  ArrowRight,
-  RefreshCw,
-} from 'lucide-react';
 
 export default function App() {
   const [candidate, setCandidate] = useState<CandidateInfo>(INITIAL_CANDIDATE);
-  const [currentSection, setCurrentSection] = useState<ExamSection>('part1_speaking_1');
+  // Default entry view is directly 仔仔詞語特訓 (Vocab Practice)
+  const [currentSection, setCurrentSection] = useState<ExamSection>('vocab_practice');
   const [timeRemainingSeconds, setTimeRemainingSeconds] = useState(60 * 60); // 60 mins
   const [isTimerRunning, setIsTimerRunning] = useState(false);
+
+  // Parent / Assessment Portal password protection
+  const [isAssessmentUnlocked, setIsAssessmentUnlocked] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('assessment_unlocked') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const [pendingSection, setPendingSection] = useState<ExamSection>('part1_speaking_1');
 
   // Initialize Score State
   const [scoreState, setScoreState] = useState<ScoreState>({
@@ -42,7 +40,7 @@ export default function App() {
     p1_sec2_scene_desc: 8,
     p1_sec3_commands: 15,
 
-    // Part 2 Initial Sample/State (Pre-mark initial words as familiar for convenient evaluation)
+    // Part 2 Initial Sample/State
     p2_reading_scores: {
       一: 1, 二: 1, 三: 1, 四: 1, 五: 1, 六: 1, 七: 1, 八: 1, 九: 1, 十: 1,
       人: 1, 口: 1, 手: 1, 足: 1, 耳: 1, 目: 1,
@@ -106,6 +104,42 @@ export default function App() {
     setScoreState((prev) => ({ ...prev, ...partial }));
   };
 
+  // Section selection guard
+  const handleSelectSection = (sec: ExamSection) => {
+    if (sec === 'vocab_practice') {
+      setCurrentSection('vocab_practice');
+      return;
+    }
+
+    if (!isAssessmentUnlocked) {
+      setPendingSection(sec);
+      setShowAuthModal(true);
+    } else {
+      setCurrentSection(sec);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setIsAssessmentUnlocked(true);
+    try {
+      sessionStorage.setItem('assessment_unlocked', 'true');
+    } catch (e) {
+      console.error(e);
+    }
+    setShowAuthModal(false);
+    setCurrentSection(pendingSection || 'part1_speaking_1');
+  };
+
+  const handleLockAssessment = () => {
+    setIsAssessmentUnlocked(false);
+    try {
+      sessionStorage.removeItem('assessment_unlocked');
+    } catch (e) {
+      console.error(e);
+    }
+    setCurrentSection('vocab_practice');
+  };
+
   // Compute summary scores
   const p1Raw =
     (scoreState.p1_q1_self_intro || 0) +
@@ -159,23 +193,32 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-100/70 text-slate-900 flex flex-col font-sans selection:bg-rose-100 selection:text-rose-900">
-      {/* Top Fixed / Sticky Navigation Bar */}
+      {/* Top Navigation Bar */}
       <Navbar
         candidate={candidate}
         currentSection={currentSection}
-        onSelectSection={(sec) => setCurrentSection(sec)}
+        onSelectSection={handleSelectSection}
         timeRemainingSeconds={timeRemainingSeconds}
         isTimerRunning={isTimerRunning}
         onToggleTimer={() => setIsTimerRunning(!isTimerRunning)}
         onResetTimer={() => setTimeRemainingSeconds(60 * 60)}
         totalScore={totalScore}
         maxScore={100}
+        isAssessmentUnlocked={isAssessmentUnlocked}
+        onRequestUnlock={() => {
+          setPendingSection('part1_speaking_1');
+          setShowAuthModal(true);
+        }}
+        onLockAssessment={handleLockAssessment}
       />
 
       {/* Main Content Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-2.5 sm:p-4 md:p-6">
-        {/* VIEW 1: Part 1 Speaking Assessment */}
-        {currentSection.startsWith('part1_') && (
+        {/* VIEW 1: Dedicated Vocab Practice Page (Default Landing View) */}
+        {currentSection === 'vocab_practice' && <VocabPracticePage />}
+
+        {/* VIEW 2: Part 1 Speaking Assessment (Protected) */}
+        {isAssessmentUnlocked && currentSection.startsWith('part1_') && (
           <SpeakingAssessment
             scoreState={scoreState}
             onUpdateScore={handleUpdateScore}
@@ -184,8 +227,8 @@ export default function App() {
           />
         )}
 
-        {/* VIEW 2: Part 2 Written & Reading Assessment */}
-        {currentSection.startsWith('part2_') && (
+        {/* VIEW 3: Part 2 Written & Reading Assessment (Protected) */}
+        {isAssessmentUnlocked && currentSection.startsWith('part2_') && (
           <WrittenAssessment
             scoreState={scoreState}
             onUpdateScore={handleUpdateScore}
@@ -194,14 +237,11 @@ export default function App() {
           />
         )}
 
-        {/* VIEW 3: Dedicated Vocab Practice Page (4 Question Types for Jovan) */}
-        {currentSection === 'vocab_practice' && <VocabPracticePage />}
+        {/* VIEW 4: Parent Daily 10-Min Practice Game (Protected) */}
+        {isAssessmentUnlocked && currentSection === 'daily_practice' && <DailyPracticeGame />}
 
-        {/* VIEW 4: Parent Daily 10-Min Practice Game */}
-        {currentSection === 'daily_practice' && <DailyPracticeGame />}
-
-        {/* VIEW 4: Printable Paper Mode */}
-        {currentSection === 'print' && (
+        {/* VIEW 5: Printable Paper Mode (Protected) */}
+        {isAssessmentUnlocked && currentSection === 'print' && (
           <PrintablePaper
             candidate={candidate}
             scoreState={scoreState}
@@ -209,8 +249,8 @@ export default function App() {
           />
         )}
 
-        {/* VIEW 5: Assessment Report & Certificate */}
-        {currentSection === 'report' && (
+        {/* VIEW 6: Assessment Report & Certificate (Protected) */}
+        {isAssessmentUnlocked && currentSection === 'report' && (
           <AssessmentReport
             candidate={candidate}
             scoreState={scoreState}
@@ -220,16 +260,32 @@ export default function App() {
         )}
       </main>
 
+      {/* Password Authentication Modal */}
+      <PasswordAuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
+      />
+
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-4 px-6 text-center text-xs text-slate-500 print:hidden">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>MKCSCC 廣東話中級班入學模擬測驗系統 • 考生：Jovan Ng（伍博睿）</span>
+            <span>廣東話詞語特訓與入學評估系統 • 考生：Jovan Ng（伍博睿）</span>
           </div>
           <div className="flex items-center gap-4 text-slate-400">
-            <span>口試 20 分鐘 ｜ 筆試 40 分鐘 ｜ 總計 60 分鐘</span>
-            <span>通過標準：Part 2 達 60-70%+ 及流利口語</span>
+            <span>200+ 核心詞語 ｜ 寶可夢卡包集卡冊 ｜ 語音發音朗讀</span>
+            {isAssessmentUnlocked ? (
+              <button
+                onClick={handleLockAssessment}
+                className="text-rose-500 font-bold hover:underline cursor-pointer"
+              >
+                🔒 退出評估系統
+              </button>
+            ) : (
+              <span>入學評估系統需密碼解鎖</span>
+            )}
           </div>
         </div>
       </footer>

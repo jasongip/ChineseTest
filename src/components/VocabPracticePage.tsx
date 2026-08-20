@@ -4,6 +4,7 @@ import { POKEMON_CARDS_DATA, PokemonCardData } from '../data/pokemonCards';
 import { PokemonBinder } from './PokemonBinder';
 import { PokemonGachaModal } from './PokemonGachaModal';
 import { SentenceScramblePractice } from './SentenceScramblePractice';
+import { ReadingComprehensionPractice } from './ReadingComprehensionPractice';
 import { speakCantonese, audioService } from '../utils/audio';
 import {
   Volume2,
@@ -31,7 +32,7 @@ import {
   LayoutGrid,
 } from 'lucide-react';
 
-type PracticeMode = 'mode_audio' | 'mode_missing' | 'mode_english' | 'mode_scramble' | 'mode_library';
+type PracticeMode = 'mode_audio' | 'mode_missing' | 'mode_english' | 'mode_scramble' | 'mode_story' | 'mode_library';
 
 const STORAGE_KEY_CARDS = 'jovan_pokemon_collection_v1';
 const STORAGE_KEY_PACKS = 'jovan_pokemon_unopened_packs_v1';
@@ -253,7 +254,12 @@ export const VocabPracticePage: React.FC = () => {
 
   // Handle answering
   const handleSelectOption = (option: { id: string; text: string; isCorrect: boolean }) => {
-    if (isAnswered) return;
+    // If already answered, clicking any option reads aloud its Cantonese pronunciation
+    if (isAnswered) {
+      audioService.playPop();
+      speakCantonese(option.text);
+      return;
+    }
 
     setSelectedAnswer(option.id);
     setIsAnswered(true);
@@ -279,12 +285,10 @@ export const VocabPracticePage: React.FC = () => {
       }
     }
 
-    // Always speak correct pronunciation after answering
-    if (currentItem) {
-      setTimeout(() => {
-        speakCantonese(currentItem.word);
-      }, 150);
-    }
+    // Always speak option pronunciation when selected
+    setTimeout(() => {
+      speakCantonese(option.text);
+    }, 150);
   };
 
   // Next question
@@ -385,13 +389,14 @@ export const VocabPracticePage: React.FC = () => {
 
           {/* Mode Selector Navigation Cards */}
           <div className="bg-white rounded-2xl p-2.5 border border-slate-200 shadow-sm">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
               {[
                 { id: 'mode_audio' as PracticeMode, num: '1', title: '聽音四揀一', desc: '粵語發音選中文字', icon: '🎧' },
                 { id: 'mode_missing' as PracticeMode, num: '2', title: '缺字填空', desc: '填補詞語缺失漢字', icon: '🧩' },
                 { id: 'mode_english' as PracticeMode, num: '3', title: '英文對照', desc: '英文釋義選中文詞', icon: '🇬🇧' },
                 { id: 'mode_scramble' as PracticeMode, num: '4', title: '重組句子', desc: '字卡排列通順句子', icon: '✍️' },
-                { id: 'mode_library' as PracticeMode, num: '5', title: '詞庫總覽點讀', desc: '180+ 詞彙速查點讀', icon: '📚' },
+                { id: 'mode_story' as PracticeMode, num: '5', title: '短文理解', desc: '50篇故事•累積抽卡', icon: '📖' },
+                { id: 'mode_library' as PracticeMode, num: '6', title: '詞庫總覽點讀', desc: '180+ 詞彙速查點讀', icon: '📚' },
               ].map((mode) => {
                 const isActive = activeMode === mode.id;
                 return (
@@ -403,7 +408,7 @@ export const VocabPracticePage: React.FC = () => {
                       audioService.playClick();
                       setActiveMode(mode.id);
                     }}
-                    className={`p-2.5 rounded-xl text-left transition-all border flex flex-col justify-between ${
+                    className={`p-2.5 rounded-xl text-left transition-all border flex flex-col justify-between cursor-pointer ${
                       isActive
                         ? 'bg-amber-50 border-amber-300 text-amber-900 shadow-sm ring-2 ring-amber-200'
                         : 'bg-slate-50/70 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
@@ -437,7 +442,8 @@ export const VocabPracticePage: React.FC = () => {
               { id: 'mode_missing' as PracticeMode, num: '2', title: '缺字填空', icon: '🧩' },
               { id: 'mode_english' as PracticeMode, num: '3', title: '英文對照', icon: '🇬🇧' },
               { id: 'mode_scramble' as PracticeMode, num: '4', title: '重組句子', icon: '✍️' },
-              { id: 'mode_library' as PracticeMode, num: '5', title: '詞庫總覽', icon: '📚' },
+              { id: 'mode_story' as PracticeMode, num: '5', title: '短文閱讀理解 (50篇)', icon: '📖' },
+              { id: 'mode_library' as PracticeMode, num: '6', title: '詞庫總覽', icon: '📚' },
             ].map((mode) => {
               const isActive = activeMode === mode.id;
               return (
@@ -448,7 +454,7 @@ export const VocabPracticePage: React.FC = () => {
                     audioService.playClick();
                     setActiveMode(mode.id);
                   }}
-                  className={`px-2.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1 whitespace-nowrap border ${
+                  className={`px-2.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1 whitespace-nowrap border cursor-pointer ${
                     isActive
                       ? 'bg-amber-500 text-white border-amber-600 shadow-xs'
                       : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -499,7 +505,7 @@ export const VocabPracticePage: React.FC = () => {
       )}
 
       {/* Filter and Settings Bar (For Modes 1, 2, 3) */}
-      {activeMode !== 'mode_library' && activeMode !== 'mode_scramble' && (
+      {activeMode !== 'mode_library' && activeMode !== 'mode_scramble' && activeMode !== 'mode_story' && (
         <div className="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-2.5">
           {/* Category Filter Chips */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 max-w-2xl no-scrollbar">
@@ -645,6 +651,13 @@ export const VocabPracticePage: React.FC = () => {
           onStreakUpdate={(newStreak) => setStreak(newStreak)}
           onTriggerPokemon={(streakNum) => triggerPokemonDraw(streakNum)}
           currentStreak={streak}
+        />
+      ) : activeMode === 'mode_story' ? (
+        /* MODE 5: SHORT STORY READING COMPREHENSION (短文閱讀理解) */
+        <ReadingComprehensionPractice
+          onTriggerPokemon={(streakOrCount) => triggerPokemonDraw(streakOrCount)}
+          unlockedCardsCount={unlockedCardIds.length}
+          totalCardsCount={POKEMON_CARDS_DATA.length}
         />
       ) : isQuizCompleted ? (
         /* QUIZ COMPLETED SCREEN */
@@ -878,7 +891,7 @@ export const VocabPracticePage: React.FC = () => {
                 } else if (isSelected) {
                   btnStyle = 'bg-rose-50 border-rose-300 text-rose-900 ring-2 ring-rose-200';
                 } else {
-                  btnStyle = 'bg-slate-50/50 border-slate-200 text-slate-400 opacity-60';
+                  btnStyle = 'bg-slate-50/50 border-slate-200 text-slate-600 hover:bg-amber-50/50 hover:border-amber-200';
                 }
               }
 
@@ -887,9 +900,9 @@ export const VocabPracticePage: React.FC = () => {
                   key={opt.id}
                   type="button"
                   id={`choice-opt-${idx}`}
-                  disabled={isAnswered}
                   onClick={() => handleSelectOption(opt)}
-                  className={`p-3 sm:p-4 rounded-xl border-2 text-left transition-all flex items-center justify-between cursor-pointer disabled:cursor-default ${btnStyle}`}
+                  className={`p-3 sm:p-4 rounded-xl border-2 text-left transition-all flex items-center justify-between cursor-pointer active:scale-98 ${btnStyle}`}
+                  title={isAnswered ? `點擊聆聽「${opt.text}」發音` : undefined}
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center font-bold text-xs text-slate-500 shadow-xs">
@@ -901,6 +914,12 @@ export const VocabPracticePage: React.FC = () => {
                       </div>
                       {isAnswered && 'jyutping' in opt && opt.jyutping && (
                         <div className="text-[11px] font-mono text-slate-400">{opt.jyutping}</div>
+                      )}
+                      {isAnswered && (
+                        <div className="text-[10px] text-amber-700 font-bold flex items-center gap-0.5 mt-0.5">
+                          <Volume2 className="w-3 h-3" />
+                          <span>點擊朗讀</span>
+                        </div>
                       )}
                     </div>
                   </div>

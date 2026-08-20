@@ -129,7 +129,7 @@ export const AssessmentReport: React.FC<AssessmentReportProps> = ({
             {candidate.nameEn} ({candidate.nameZh}) 評估成績單
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 max-w-xl">
-            恭喜 Jovan 完成 60 分鐘入學模擬測驗！根據 MKCSCC 評估指標，口試表達流暢，筆試認讀達標率為{' '}
+            恭喜 Jovan 完成 60 分鐘入學模擬測驗！根據廣東話中級班評估指標，口試表達流暢，筆試認讀達標率為{' '}
             <strong className="text-[#2B6CB0] font-bold">{readingPercentage}%</strong>，已完全達到中級班入學指標。
           </p>
         </div>
@@ -312,21 +312,21 @@ export const AssessmentReport: React.FC<AssessmentReportProps> = ({
             Certificate of Assessment
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-gray-900 font-serif">
-            MKCSCC 廣東話中級班入學模擬測驗證書
+            廣東話中級班入學模擬測驗證書
           </h2>
           <p className="text-sm text-gray-600 font-serif">茲證明考生</p>
           <div className="text-3xl sm:text-4xl font-black text-[#2B6CB0] font-serif tracking-wider">
             {candidate.nameEn}（{candidate.nameZh}）
           </div>
           <p className="text-xs sm:text-sm text-gray-700 max-w-lg mx-auto leading-relaxed">
-            於 <strong>{candidate.testDate}</strong> 完成 MKCSCC 廣東話中級班 60 分鐘入學模擬評估（口試 20 分鐘與筆試 40 分鐘），總評分獲{' '}
+            於 <strong>{candidate.testDate}</strong> 完成廣東話中級班 60 分鐘入學模擬評估（口試 20 分鐘與筆試 40 分鐘），總評分獲{' '}
             <strong className="text-[#FF6B6B] font-mono text-base">{totalScore} / 100 分</strong>
             ，考核表現符合中級班入學標準，特頒此證以資鼓勵。
           </p>
 
           <div className="pt-6 flex flex-wrap items-center justify-between text-xs text-gray-500 max-w-md mx-auto border-t border-[#FDE68A]">
             <div>
-              <span className="font-bold text-gray-800">MKCSCC 評估考官組</span>
+              <span className="font-bold text-gray-800">廣東話入學評估組</span>
             </div>
             <div>
               <span>評估日期：{candidate.testDate}</span>

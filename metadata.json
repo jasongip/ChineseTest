@@ -1,6 +1,6 @@
 {
-  "name": "MKCSCC 廣東話中級班入學模擬測驗",
-  "description": "MKCSCC 廣東話中級班入學模擬測驗系統 (口試與筆試互動評估及列印試卷)",
+  "name": "廣東話小學入學模擬評估與詞語特訓",
+  "description": "廣東話中級班入學模擬測驗系統與詞語特訓 (口試與筆試互動評估、詞語聽選填空、重組句子及寶可夢卡包獎勵)",
   "requestFramePermissions": ["microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

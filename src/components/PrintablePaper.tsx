@@ -60,10 +60,10 @@ export const PrintablePaper: React.FC<PrintablePaperProps> = ({
         {/* Header */}
         <div className="text-center pb-6 border-b-2 border-gray-900 space-y-2">
           <div className="text-xs tracking-widest text-gray-500 font-bold uppercase">
-            MKCSCC 廣東話班入學評估考核試卷
+            廣東話班入學評估考核試卷
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 font-serif">
-            MKCSCC 廣東話中級班入學模擬測驗
+            廣東話中級班入學模擬測驗
           </h1>
           <div className="text-xs sm:text-sm text-gray-700 font-medium flex flex-wrap items-center justify-center gap-4 pt-1">
             <span>
