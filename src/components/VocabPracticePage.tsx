@@ -425,7 +425,7 @@ export const VocabPracticePage: React.FC = () => {
                 { id: 'mode_missing' as PracticeMode, num: '2', title: '缺字填空', desc: '填補詞語缺失漢字', icon: '🧩' },
                 { id: 'mode_english' as PracticeMode, num: '3', title: '英文對照', desc: '英文釋義選中文詞', icon: '🇬🇧' },
                 { id: 'mode_scramble' as PracticeMode, num: '4', title: '重組句子', desc: '字卡排列通順•連對5題抽卡', icon: '✍️' },
-                { id: 'mode_story' as PracticeMode, num: '5', title: '短文理解', desc: '50篇故事•累積抽卡', icon: '📖' },
+                { id: 'mode_story' as PracticeMode, num: '5', title: '短文理解', desc: '150篇故事•累積抽卡', icon: '📖' },
                 { id: 'mode_library' as PracticeMode, num: '6', title: '詞庫總覽點讀', desc: '180+ 詞彙速查點讀', icon: '📚' },
               ].map((mode) => {
                 const isActive = activeMode === mode.id;
@@ -472,7 +472,7 @@ export const VocabPracticePage: React.FC = () => {
               { id: 'mode_missing' as PracticeMode, num: '2', title: '缺字填空', icon: '🧩' },
               { id: 'mode_english' as PracticeMode, num: '3', title: '英文對照', icon: '🇬🇧' },
               { id: 'mode_scramble' as PracticeMode, num: '4', title: '重組句子', icon: '✍️' },
-              { id: 'mode_story' as PracticeMode, num: '5', title: '短文閱讀理解 (50篇)', icon: '📖' },
+              { id: 'mode_story' as PracticeMode, num: '5', title: '短文閱讀理解 (150篇)', icon: '📖' },
               { id: 'mode_library' as PracticeMode, num: '6', title: '詞庫總覽', icon: '📚' },
             ].map((mode) => {
               const isActive = activeMode === mode.id;

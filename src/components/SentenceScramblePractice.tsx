@@ -124,16 +124,14 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
   const handleSelectToken = (token: { id: string; text: string }) => {
     if (isAnswered) return;
     audioService.playPop();
-    speakCantonese(token.text);
     setAvailableTokens((prev) => prev.filter((t) => t.id !== token.id));
     setPlacedTokens((prev) => [...prev, token]);
   };
 
-  // User clicks a placed card -> return to available, or pronounce when answered
+  // User clicks a placed card -> return to available
   const handleRemovePlacedToken = (token: { id: string; text: string }) => {
     if (isAnswered) {
       audioService.playPop();
-      speakCantonese(token.text);
       return;
     }
     audioService.playPop();
