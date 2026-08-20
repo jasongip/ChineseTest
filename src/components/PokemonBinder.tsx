@@ -21,6 +21,7 @@ import {
 
 interface PokemonBinderProps {
   unlockedCardIds: number[];
+  cardInventory?: Record<number, number>;
   currentStreak: number;
   availablePacks: number;
   onOpenPack: () => void;
@@ -29,6 +30,7 @@ interface PokemonBinderProps {
 
 export const PokemonBinder: React.FC<PokemonBinderProps> = ({
   unlockedCardIds,
+  cardInventory = {},
   currentStreak,
   availablePacks,
   onOpenPack,
@@ -43,6 +45,9 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
   const totalCards = POKEMON_CARDS_DATA.length;
   const unlockedCount = unlockedCardIds.length;
   const progressPercent = Math.round((unlockedCount / totalCards) * 100);
+
+  // Total cards in inventory (sum of all duplicates)
+  const totalInventoryCount = Object.values(cardInventory).reduce((sum: number, count: number) => sum + (Number(count) || 0), 0) || unlockedCount;
 
   const ssrUnlocked = POKEMON_CARDS_DATA.filter((c) => c.rarity === 'SSR' && unlockedCardIds.includes(c.id)).length;
   const ssrTotal = POKEMON_CARDS_DATA.filter((c) => c.rarity === 'SSR').length;
@@ -163,12 +168,14 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
         {/* PROGRESS STATS ROW */}
         <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-slate-800">
           <div className="bg-slate-800/60 rounded-xl p-3 border border-slate-700/60">
-            <span className="text-[11px] text-slate-400 font-medium block">總收集進度</span>
+            <span className="text-[11px] text-slate-400 font-medium block">圖鑑收集率 / 持有總數</span>
             <div className="flex items-baseline gap-2 mt-0.5">
               <span className="text-xl font-black text-amber-300">
-                {unlockedCount} / {totalCards}
+                {unlockedCount} / {totalCards} <span className="text-xs font-normal text-slate-300">種</span>
               </span>
-              <span className="text-xs font-bold text-slate-400">({progressPercent}%)</span>
+              <span className="text-xs font-bold text-amber-400 font-mono bg-amber-500/20 px-1.5 py-0.5 rounded">
+                共 {totalInventoryCount} 張
+              </span>
             </div>
             <div className="w-full h-1.5 bg-slate-700 rounded-full mt-2 overflow-hidden">
               <div
@@ -310,11 +317,13 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4 sm:gap-6 mt-6">
           {filteredCards.map((card) => {
             const isUnlocked = unlockedCardIds.includes(card.id);
+            const count = cardInventory[card.id] || (isUnlocked ? 1 : 0);
             return (
               <div key={card.id} className="flex justify-center">
                 <PokemonCard
                   card={card}
                   isUnlocked={isUnlocked}
+                  cardCount={count}
                   size="md"
                   onClick={() => handleCardClick(card)}
                 />
@@ -339,6 +348,7 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
             <PokemonCard
               card={selectedCardForInspect}
               isUnlocked={unlockedCardIds.includes(selectedCardForInspect.id)}
+              cardCount={cardInventory[selectedCardForInspect.id] || 1}
               size="lg"
             />
 
@@ -347,6 +357,11 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold text-amber-400">
                   📖 寶可夢圖鑑檔案 #{String(selectedCardForInspect.id).padStart(3, '0')}
+                  {cardInventory[selectedCardForInspect.id] && cardInventory[selectedCardForInspect.id] > 1 && (
+                    <span className="ml-2 px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-mono text-[11px]">
+                      已收集 {cardInventory[selectedCardForInspect.id]} 張
+                    </span>
+                  )}
                 </span>
                 <button
                   onClick={() =>

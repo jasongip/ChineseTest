@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { VOCAB_PRACTICE_LIST, VOCAB_CATEGORIES, VocabItem } from '../data/vocabPracticeList';
-import { POKEMON_CARDS_DATA, PokemonCardData } from '../data/pokemonCards';
+import { POKEMON_CARDS_DATA, PokemonCardData, CardRarity } from '../data/pokemonCards';
 import { PokemonBinder } from './PokemonBinder';
 import { PokemonGachaModal } from './PokemonGachaModal';
 import { SentenceScramblePractice } from './SentenceScramblePractice';
@@ -35,6 +35,7 @@ import {
 type PracticeMode = 'mode_audio' | 'mode_missing' | 'mode_english' | 'mode_scramble' | 'mode_story' | 'mode_library';
 
 const STORAGE_KEY_CARDS = 'jovan_pokemon_collection_v1';
+const STORAGE_KEY_INVENTORY = 'jovan_pokemon_inventory_v1';
 const STORAGE_KEY_PACKS = 'jovan_pokemon_unopened_packs_v1';
 
 export const VocabPracticePage: React.FC = () => {
@@ -55,20 +56,39 @@ export const VocabPracticePage: React.FC = () => {
   const [isQuizCompleted, setIsQuizCompleted] = useState<boolean>(false);
   const [showExplanation, setShowExplanation] = useState<boolean>(false);
 
-  // Pokemon Rewards State
-  const [unlockedCardIds, setUnlockedCardIds] = useState<number[]>(() => {
+  // Pokemon Rewards State: Inventory holds counts per card ID (supports duplicates)
+  const [cardInventory, setCardInventory] = useState<Record<number, number>>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY_CARDS);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      const savedInv = localStorage.getItem(STORAGE_KEY_INVENTORY);
+      if (savedInv) {
+        const parsedInv = JSON.parse(savedInv);
+        if (parsedInv && typeof parsedInv === 'object' && Object.keys(parsedInv).length > 0) {
+          return parsedInv;
+        }
+      }
+      // Migrate from old unlockedCardIds if exists
+      const savedLegacy = localStorage.getItem(STORAGE_KEY_CARDS);
+      if (savedLegacy) {
+        const parsed = JSON.parse(savedLegacy);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const migrated: Record<number, number> = {};
+          parsed.forEach((id: number) => {
+            migrated[id] = (migrated[id] || 0) + 1;
+          });
+          return migrated;
+        }
       }
     } catch {
       // Ignore
     }
-    // Starter reward: Pikachu (#25)
-    return [25];
+    // Starter reward: Pikachu (#25) x1
+    return { 25: 1 };
   });
+
+  // Derived array of unique unlocked IDs for backward compatibility and fast checking
+  const unlockedCardIds = useMemo(() => {
+    return Object.keys(cardInventory).map(Number).filter((id) => (cardInventory[id] || 0) > 0);
+  }, [cardInventory]);
 
   const [availablePacks, setAvailablePacks] = useState<number>(() => {
     try {
@@ -82,14 +102,15 @@ export const VocabPracticePage: React.FC = () => {
     return 0;
   });
 
-  // Sync to localStorage whenever unlockedCardIds or availablePacks change
+  // Sync to localStorage whenever cardInventory or availablePacks change
   useEffect(() => {
     try {
+      localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify(cardInventory));
       localStorage.setItem(STORAGE_KEY_CARDS, JSON.stringify(unlockedCardIds));
     } catch {
       // Ignore
     }
-  }, [unlockedCardIds]);
+  }, [cardInventory, unlockedCardIds]);
 
   useEffect(() => {
     try {
@@ -102,42 +123,50 @@ export const VocabPracticePage: React.FC = () => {
   const [gachaModalOpen, setGachaModalOpen] = useState<boolean>(false);
   const [drawnCard, setDrawnCard] = useState<PokemonCardData | null>(null);
   const [isNewCard, setIsNewCard] = useState<boolean>(false);
+  const [drawnCardCount, setDrawnCardCount] = useState<number>(1);
   const [lastStreakTriggered, setLastStreakTriggered] = useState<number>(0);
 
   // Missing char mode state: which index is blank (0 or 1 etc)
   const [blankIndex, setBlankIndex] = useState<number>(1);
 
-  // Trigger Pokemon Gacha Draw (Now triggered every 10 consecutive correct answers)
+  // Trigger Pokemon Gacha Draw (Now with duplicate chance and authentic rarity tier distribution)
   const triggerPokemonDraw = (streakNum: number = 10) => {
-    const lockedPool = POKEMON_CARDS_DATA.filter((c) => !unlockedCardIds.includes(c.id));
-    
-    let chosen: PokemonCardData;
-    let isNew = false;
+    // Determine rarity based on roll & streak
+    const roll = Math.random() * 100;
+    let targetRarity: CardRarity;
 
-    if (lockedPool.length > 0) {
-      // If streak is multiple of 10 or 20, favor SSR / UR cards
-      if (streakNum >= 10 && lockedPool.some((c) => c.rarity === 'SSR' || c.rarity === 'UR')) {
-        const rarePool = lockedPool.filter((c) => c.rarity === 'SSR' || c.rarity === 'UR');
-        chosen = rarePool[Math.floor(Math.random() * rarePool.length)];
-      } else {
-        chosen = lockedPool[Math.floor(Math.random() * lockedPool.length)];
-      }
-      isNew = true;
-      const nextUnlocked = [...unlockedCardIds, chosen.id];
-      setUnlockedCardIds(nextUnlocked);
-      try {
-        localStorage.setItem(STORAGE_KEY_CARDS, JSON.stringify(nextUnlocked));
-      } catch {
-        // Ignore
-      }
+    // High streak bonus (e.g. 20, 30...) gives higher SSR / UR chance
+    if (streakNum >= 20) {
+      if (roll < 20) targetRarity = 'SSR'; // 20%
+      else if (roll < 55) targetRarity = 'UR'; // 35%
+      else if (roll < 85) targetRarity = 'SR'; // 30%
+      else targetRarity = 'R'; // 15%
     } else {
-      // All collected, draw random card with high holographic chance
-      chosen = POKEMON_CARDS_DATA[Math.floor(Math.random() * POKEMON_CARDS_DATA.length)];
-      isNew = false;
+      // Standard pack distribution
+      if (roll < 8) targetRarity = 'SSR'; // 8% SSR
+      else if (roll < 25) targetRarity = 'UR'; // 17% UR
+      else if (roll < 60) targetRarity = 'SR'; // 35% SR
+      else targetRarity = 'R'; // 40% R
     }
+
+    // Filter cards by determined rarity
+    const rarityCards = POKEMON_CARDS_DATA.filter((c) => c.rarity === targetRarity);
+    const candidatePool = rarityCards.length > 0 ? rarityCards : POKEMON_CARDS_DATA;
+    
+    // Pick random card from candidate pool (allows drawing duplicates)
+    const chosen = candidatePool[Math.floor(Math.random() * candidatePool.length)];
+    const previousCount = cardInventory[chosen.id] || 0;
+    const isNew = previousCount === 0;
+    const newCount = previousCount + 1;
+
+    setCardInventory((prev) => ({
+      ...prev,
+      [chosen.id]: newCount,
+    }));
 
     setDrawnCard(chosen);
     setIsNewCard(isNew);
+    setDrawnCardCount(newCount);
     setGachaModalOpen(true);
     setLastStreakTriggered(streakNum);
   };
@@ -151,12 +180,13 @@ export const VocabPracticePage: React.FC = () => {
   };
 
   const handleResetCollection = () => {
-    if (window.confirm('確定要重設寶可夢卡冊進度嗎？（將恢復為只有比卡超）')) {
-      const initial = [25];
-      setUnlockedCardIds(initial);
+    if (window.confirm('確定要重設寶可夢卡冊進度嗎？（將恢復為只有比卡超 x1）')) {
+      const initial = { 25: 1 };
+      setCardInventory(initial);
       setAvailablePacks(0);
       try {
-        localStorage.setItem(STORAGE_KEY_CARDS, JSON.stringify(initial));
+        localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify(initial));
+        localStorage.setItem(STORAGE_KEY_CARDS, JSON.stringify([25]));
         localStorage.setItem(STORAGE_KEY_PACKS, '0');
       } catch {
         // Ignore
@@ -394,7 +424,7 @@ export const VocabPracticePage: React.FC = () => {
                 { id: 'mode_audio' as PracticeMode, num: '1', title: '聽音四揀一', desc: '粵語發音選中文字', icon: '🎧' },
                 { id: 'mode_missing' as PracticeMode, num: '2', title: '缺字填空', desc: '填補詞語缺失漢字', icon: '🧩' },
                 { id: 'mode_english' as PracticeMode, num: '3', title: '英文對照', desc: '英文釋義選中文詞', icon: '🇬🇧' },
-                { id: 'mode_scramble' as PracticeMode, num: '4', title: '重組句子', desc: '字卡排列通順句子', icon: '✍️' },
+                { id: 'mode_scramble' as PracticeMode, num: '4', title: '重組句子', desc: '字卡排列通順•連對5題抽卡', icon: '✍️' },
                 { id: 'mode_story' as PracticeMode, num: '5', title: '短文理解', desc: '50篇故事•累積抽卡', icon: '📖' },
                 { id: 'mode_library' as PracticeMode, num: '6', title: '詞庫總覽點讀', desc: '180+ 詞彙速查點讀', icon: '📚' },
               ].map((mode) => {
@@ -968,6 +998,7 @@ export const VocabPracticePage: React.FC = () => {
       {/* JOVAN'S POKEMON CARD COLLECTION BINDER (PLACED AT BOTTOM) */}
       <PokemonBinder
         unlockedCardIds={unlockedCardIds}
+        cardInventory={cardInventory}
         currentStreak={streak}
         availablePacks={availablePacks}
         onOpenPack={handleManualOpenPack}
@@ -980,6 +1011,7 @@ export const VocabPracticePage: React.FC = () => {
         onClose={() => setGachaModalOpen(false)}
         drawnCard={drawnCard}
         isNewCard={isNewCard}
+        cardCount={drawnCardCount}
         streakCount={lastStreakTriggered || 10}
         onViewBinder={scrollToBinder}
       />

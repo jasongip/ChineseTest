@@ -8,6 +8,7 @@ interface PokemonCardProps {
   isUnlocked?: boolean;
   size?: 'sm' | 'md' | 'lg';
   isNew?: boolean;
+  cardCount?: number;
   onClick?: () => void;
   showHoloEffect?: boolean;
 }
@@ -17,6 +18,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
   isUnlocked = true,
   size = 'md',
   isNew = false,
+  cardCount = 1,
   onClick,
   showHoloEffect = true,
 }) => {
@@ -146,12 +148,20 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
         />
       )}
 
-      {/* NEW Ribbon if just pulled */}
-      {isNew && (
+      {/* NEW Ribbon or Duplicate Count Badge */}
+      {isNew ? (
         <div className="absolute -top-1 -right-1 z-20 bg-gradient-to-r from-red-500 to-pink-500 text-white text-[10px] font-black px-3 py-1 rounded-bl-xl rounded-tr-xl shadow-md uppercase tracking-wider animate-bounce flex items-center gap-1">
           <Sparkles className="w-3 h-3" /> NEW!
         </div>
-      )}
+      ) : cardCount > 1 ? (
+        <div
+          title={`已擁有 ${cardCount} 張`}
+          className="absolute -top-1 -right-1 z-20 bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 border border-amber-300/80 text-amber-300 font-mono text-[11px] font-black px-2.5 py-0.5 rounded-bl-xl rounded-tr-xl shadow-md flex items-center gap-0.5"
+        >
+          <span className="text-[9px] text-amber-400 font-sans">擁有</span>
+          <span>x{cardCount}</span>
+        </div>
+      ) : null}
 
       {/* CARD TOP BAR: Name, Element & HP */}
       <div className="relative z-10 flex items-center justify-between pb-1.5 border-b border-slate-300/60">

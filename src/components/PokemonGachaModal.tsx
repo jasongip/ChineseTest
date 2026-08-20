@@ -9,6 +9,7 @@ interface PokemonGachaModalProps {
   onClose: () => void;
   drawnCard: PokemonCardData | null;
   isNewCard: boolean;
+  cardCount?: number;
   streakCount: number;
   onViewBinder?: () => void;
 }
@@ -18,6 +19,7 @@ export const PokemonGachaModal: React.FC<PokemonGachaModalProps> = ({
   onClose,
   drawnCard,
   isNewCard,
+  cardCount = 1,
   streakCount,
   onViewBinder,
 }) => {
@@ -41,7 +43,11 @@ export const PokemonGachaModal: React.FC<PokemonGachaModalProps> = ({
       audioService.playFanfare();
       // Announce drawn pokemon in Cantonese
       setTimeout(() => {
-        speakCantonese(`太犀利啦仔仔！你抽到咗 ${drawnCard.nameZh}！`);
+        if (isNewCard) {
+          speakCantonese(`太犀利啦仔仔！你首次抽到全新神獸 ${drawnCard.nameZh}！`);
+        } else {
+          speakCantonese(`你再次抽到 ${drawnCard.nameZh}！目前一共擁有 ${cardCount} 張！`);
+        }
       }, 400);
     }, 1200);
   };
@@ -75,7 +81,7 @@ export const PokemonGachaModal: React.FC<PokemonGachaModalProps> = ({
           {packState === 'revealed'
             ? isNewCard
               ? '🎉 哇！這是全新解鎖的稀有卡牌，已收錄進你的集卡冊！'
-              : '🌟 重複抽到強化卡牌！熟練度與閃光值提升！'
+              : `🌟 再次抽到同一款卡牌！目前一共持有 x${cardCount} 張！`
             : '仔仔表現超棒！快點擊撕開神秘卡包，看看抽到哪隻精靈！'}
         </p>
 

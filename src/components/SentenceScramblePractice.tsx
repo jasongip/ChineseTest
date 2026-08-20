@@ -184,8 +184,8 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
         speakCantonese(currentQ.targetSentence);
       }, 300);
 
-      // Trigger Pokemon reward immediately every 10 streak (10, 20, 30...)
-      if (newStreak > 0 && newStreak % 10 === 0) {
+      // Trigger Pokemon reward immediately every 5 streak (5, 10, 15, 20...)
+      if (newStreak > 0 && newStreak % 5 === 0) {
         setTimeout(() => {
           onTriggerPokemon(newStreak);
         }, 500);
@@ -269,9 +269,12 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 text-xs font-bold text-amber-600">
+              <div
+                title="重組句子連對 5 題即可抽寶可夢卡！"
+                className="flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200"
+              >
                 <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                <span>連對: <strong>{currentStreak}</strong></span>
+                <span>連對: <strong>{currentStreak}</strong>/5 抽卡</span>
               </div>
               <div className="text-xs font-bold text-slate-600">
                 得分: <span className="text-amber-600 font-black">{score}</span> / {currentIndex + (isAnswered ? 1 : 0)}
