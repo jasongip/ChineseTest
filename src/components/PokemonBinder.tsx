@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { POKEMON_CARDS_DATA, PokemonCardData, CardRarity } from '../data/pokemonCards';
 import { PokemonCard } from './PokemonCard';
 import { speakCantonese, audioService } from '../utils/audio';
@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 interface PokemonBinderProps {
-  unlockedCardIds: number[];
+  unlockedCardIds?: number[];
   cardInventory?: Record<number, number>;
   currentStreak: number;
   availablePacks: number;
@@ -28,10 +28,10 @@ interface PokemonBinderProps {
 }
 
 export const PokemonBinder: React.FC<PokemonBinderProps> = ({
-  unlockedCardIds,
+  unlockedCardIds = [],
   cardInventory = {},
-  currentStreak,
-  availablePacks,
+  currentStreak = 0,
+  availablePacks = 0,
   onOpenPack,
 }) => {
   const [filterRarity, setFilterRarity] = useState<string>('all');
@@ -39,23 +39,35 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCardForInspect, setSelectedCardForInspect] = useState<PokemonCardData | null>(null);
 
+  // Compute effective unlocked card IDs reliably from either prop or inventory map
+  const effectiveUnlockedCardIds = useMemo(() => {
+    const fromInventory = Object.keys(cardInventory || {})
+      .map(Number)
+      .filter((id) => (cardInventory[id] || 0) > 0);
+
+    const merged = Array.from(new Set([...(unlockedCardIds || []), ...fromInventory]));
+    return merged;
+  }, [unlockedCardIds, cardInventory]);
+
   // Card stats
   const totalCards = POKEMON_CARDS_DATA.length;
-  const unlockedCount = unlockedCardIds.length;
-  const progressPercent = Math.round((unlockedCount / totalCards) * 100);
+  const unlockedCount = effectiveUnlockedCardIds.length;
+  const progressPercent = Math.round((unlockedCount / Math.max(1, totalCards)) * 100);
 
   // Total cards in inventory (sum of all duplicates)
-  const totalInventoryCount = Object.values(cardInventory).reduce((sum: number, count: number) => sum + (Number(count) || 0), 0) || unlockedCount;
+  const totalInventoryCount =
+    Object.values(cardInventory || {}).reduce((sum: number, count: number) => sum + (Number(count) || 0), 0) ||
+    unlockedCount;
 
-  const ssrUnlocked = POKEMON_CARDS_DATA.filter((c) => c.rarity === 'SSR' && unlockedCardIds.includes(c.id)).length;
+  const ssrUnlocked = POKEMON_CARDS_DATA.filter((c) => c.rarity === 'SSR' && effectiveUnlockedCardIds.includes(c.id)).length;
   const ssrTotal = POKEMON_CARDS_DATA.filter((c) => c.rarity === 'SSR').length;
 
-  const urUnlocked = POKEMON_CARDS_DATA.filter((c) => c.rarity === 'UR' && unlockedCardIds.includes(c.id)).length;
+  const urUnlocked = POKEMON_CARDS_DATA.filter((c) => c.rarity === 'UR' && effectiveUnlockedCardIds.includes(c.id)).length;
   const urTotal = POKEMON_CARDS_DATA.filter((c) => c.rarity === 'UR').length;
 
   // Filtered Cards
   const filteredCards = POKEMON_CARDS_DATA.filter((card) => {
-    const isUnlocked = unlockedCardIds.includes(card.id);
+    const isUnlocked = effectiveUnlockedCardIds.includes(card.id);
 
     // Status filter
     if (filterStatus === 'unlocked' && !isUnlocked) return false;
@@ -79,7 +91,7 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
   });
 
   const handleCardClick = (card: PokemonCardData) => {
-    const isUnlocked = unlockedCardIds.includes(card.id);
+    const isUnlocked = effectiveUnlockedCardIds.includes(card.id);
     setSelectedCardForInspect(card);
     if (isUnlocked) {
       speakCantonese(`${card.nameZh}！${card.type}屬性！`);
@@ -306,7 +318,7 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4 sm:gap-6 mt-6">
           {filteredCards.map((card) => {
-            const isUnlocked = unlockedCardIds.includes(card.id);
+            const isUnlocked = effectiveUnlockedCardIds.includes(card.id);
             const count = cardInventory[card.id] || (isUnlocked ? 1 : 0);
             return (
               <div key={card.id} className="flex justify-center">
@@ -337,7 +349,7 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
             {/* JUMBO CARD */}
             <PokemonCard
               card={selectedCardForInspect}
-              isUnlocked={unlockedCardIds.includes(selectedCardForInspect.id)}
+              isUnlocked={effectiveUnlockedCardIds.includes(selectedCardForInspect.id)}
               cardCount={cardInventory[selectedCardForInspect.id] || 1}
               size="lg"
             />

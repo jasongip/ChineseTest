@@ -6,6 +6,8 @@ interface PasswordAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  title?: string;
+  description?: string;
 }
 
 const VALID_PASSWORDS = ['10030627', '10010627'];
@@ -14,6 +16,8 @@ export const PasswordAuthModal: React.FC<PasswordAuthModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
+  title = '入學評估系統驗證',
+  description = '此專區包含口試、筆試、10分鐘複習、模擬試卷及評分報告。請輸入家長驗證密碼：',
 }) => {
   const [inputPassword, setInputPassword] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
@@ -83,10 +87,10 @@ export const PasswordAuthModal: React.FC<PasswordAuthModalProps> = ({
             )}
           </div>
           <h3 className="text-xl font-black text-slate-900 tracking-tight">
-            入學評估系統驗證
+            {title}
           </h3>
           <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto leading-relaxed">
-            此專區包含口試、筆試、10分鐘複習、模擬試卷及評分報告。請輸入家長驗證密碼：
+            {description}
           </p>
         </div>
 

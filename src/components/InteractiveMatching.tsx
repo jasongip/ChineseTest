@@ -16,9 +16,9 @@ interface InteractiveMatchingProps {
 export const InteractiveMatching: React.FC<InteractiveMatchingProps> = ({
   id,
   title,
-  pairs,
-  scrambledRight,
-  connections,
+  pairs = [],
+  scrambledRight = [],
+  connections = {},
   onConnectionsChange,
   showFeedback = true,
 }) => {

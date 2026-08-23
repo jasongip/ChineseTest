@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { SCRAMBLE_SENTENCES_DATA, ScrambleSentenceItem } from '../data/scrambleSentences';
+import React, { useState, useEffect } from 'react';
+import { ScrambleSentenceItem } from '../data/scrambleSentences';
 import { speakCantonese, audioService } from '../utils/audio';
 import {
   Volume2,
@@ -11,23 +11,23 @@ import {
   ArrowRight,
   Flame,
   Undo2,
-  RefreshCw,
   Trophy,
   Check,
-  Layers,
   Award,
-  BookOpen,
 } from 'lucide-react';
 
 interface SentenceScramblePracticeProps {
+  questions: ScrambleSentenceItem[];
   onStreakUpdate: (newStreak: number) => void;
   onTriggerPokemon: (streak: number) => void;
   currentStreak: number;
+  onRecordResult?: (isCorrect: boolean) => void;
+  onSessionComplete?: (score: number, wrongItems: ScrambleSentenceItem[]) => void;
 }
 
 // Fisher-Yates shuffle
 function shuffleArray<T>(array: T[]): T[] {
-  const arr = [...array];
+  const arr = [...(array || [])];
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
@@ -36,17 +36,16 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> = ({
+  questions = [],
   onStreakUpdate,
   onTriggerPokemon,
-  currentStreak,
+  currentStreak = 0,
+  onRecordResult,
+  onSessionComplete,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [quizSize, setQuizSize] = useState<number>(10);
-  const [questions, setQuestions] = useState<ScrambleSentenceItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
 
   // Active question state
-  // availableTokens: { id: string, text: string }[]
   const [availableTokens, setAvailableTokens] = useState<{ id: string; text: string }[]>([]);
   const [placedTokens, setPlacedTokens] = useState<{ id: string; text: string }[]>([]);
   
@@ -55,44 +54,10 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
   const [showHint, setShowHint] = useState<boolean>(false);
   const [score, setScore] = useState<number>(0);
   const [wrongQuestions, setWrongQuestions] = useState<ScrambleSentenceItem[]>([]);
-  const [isQuizCompleted, setIsQuizCompleted] = useState<boolean>(false);
-
-  // Filter list
-  const filteredSentences = useMemo(() => {
-    if (selectedCategory === 'all') return SCRAMBLE_SENTENCES_DATA;
-    return SCRAMBLE_SENTENCES_DATA.filter((s) => s.category === selectedCategory);
-  }, [selectedCategory]);
-
-  // Categories list
-  const categories = [
-    { id: 'all', name: `全部主題 (${SCRAMBLE_SENTENCES_DATA.length} 題)` },
-    { id: 'family_people', name: '👨‍👩‍👧‍👦 家庭與人物' },
-    { id: 'school_learning', name: '🏫 學校與學習' },
-    { id: 'nature_animals', name: '🌿 大自然與動植物' },
-    { id: 'daily_actions', name: '🏃 動作與身體' },
-    { id: 'objects_food', name: '🍎 物品與食物' },
-    { id: 'feelings_adj', name: '😄 感覺與情緒' },
-    { id: 'time_place', name: '⏰ 時間與方位' },
-  ];
-
-  // Initialize or restart quiz
-  const startQuiz = (customList?: ScrambleSentenceItem[]) => {
-    const pool: ScrambleSentenceItem[] = customList || filteredSentences;
-    const shuffled: ScrambleSentenceItem[] = shuffleArray<ScrambleSentenceItem>(pool).slice(0, Math.min(quizSize, pool.length));
-    setQuestions(shuffled);
-    setCurrentIndex(0);
-    setScore(0);
-    onStreakUpdate(0);
-    setWrongQuestions([]);
-    setIsQuizCompleted(false);
-    if (shuffled.length > 0) {
-      loadQuestion(shuffled[0]);
-    }
-  };
 
   // Load a single question
   const loadQuestion = (item: ScrambleSentenceItem | undefined) => {
-    if (!item) return;
+    if (!item || !item.segments) return;
     setIsAnswered(false);
     setIsCorrect(false);
     setShowHint(false);
@@ -113,12 +78,16 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
     setAvailableTokens(shuffled);
   };
 
-  // On category or size change
   useEffect(() => {
-    startQuiz();
-  }, [selectedCategory, quizSize]);
+    setCurrentIndex(0);
+    setScore(0);
+    setWrongQuestions([]);
+    if (questions && questions.length > 0) {
+      loadQuestion(questions[0]);
+    }
+  }, [questions]);
 
-  const currentQ = questions[currentIndex];
+  const currentQ = questions && questions.length > 0 ? questions[currentIndex] : undefined;
 
   // User clicks an available card -> move to placed
   const handleSelectToken = (token: { id: string; text: string }) => {
@@ -176,13 +145,14 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
       setScore((prev) => prev + 1);
       const newStreak = currentStreak + 1;
       onStreakUpdate(newStreak);
+      if (onRecordResult) onRecordResult(true);
 
       // Read aloud the whole sentence
       setTimeout(() => {
         speakCantonese(currentQ.targetSentence);
       }, 300);
 
-      // Trigger Pokemon reward immediately every 5 streak (5, 10, 15, 20...)
+      // Trigger Pokemon reward immediately every 5 consecutive correct answers (5, 10, 15, 20...)
       if (newStreak > 0 && newStreak % 5 === 0) {
         setTimeout(() => {
           onTriggerPokemon(newStreak);
@@ -191,19 +161,25 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
     } else {
       audioService.playError();
       onStreakUpdate(0);
+      if (onRecordResult) onRecordResult(false);
       setWrongQuestions((prev) => [...prev, currentQ]);
     }
   };
 
   // Next Question
   const handleNext = () => {
-    if (currentIndex + 1 >= questions.length) {
-      setIsQuizCompleted(true);
+    const totalQ = questions ? questions.length : 0;
+    if (currentIndex + 1 >= totalQ) {
+      if (onSessionComplete) {
+        onSessionComplete(score, wrongQuestions);
+      }
       audioService.playCelebration();
     } else {
       const nextIdx = currentIndex + 1;
       setCurrentIndex(nextIdx);
-      loadQuestion(questions[nextIdx]);
+      if (questions && questions[nextIdx]) {
+        loadQuestion(questions[nextIdx]);
+      }
     }
   };
 
@@ -213,198 +189,146 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
     speakCantonese(currentQ.targetSentence);
   };
 
+  if (!currentQ) return null;
+
+  const isAllPlaced = (availableTokens || []).length === 0;
+
   return (
     <div className="space-y-3 sm:space-y-4">
-      {/* FILTER & TOP CONTROLS */}
-      <div className="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-2.5">
-        {/* Category Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 max-w-full no-scrollbar">
-          <span className="text-xs font-bold text-slate-500 shrink-0">主題分類：</span>
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setSelectedCategory(c.id)}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                selectedCategory === c.id
-                  ? 'bg-amber-500 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              {c.name}
-            </button>
-          ))}
-        </div>
-
-        {/* Quiz Length */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-bold text-slate-500">每輪題數：</span>
-          {[5, 10, 15, 20].map((len) => (
-            <button
-              key={len}
-              onClick={() => setQuizSize(len)}
-              className={`px-2 py-0.5 rounded-lg text-xs font-bold transition ${
-                quizSize === len ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              {len} 題
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* QUIZ MAIN CARD */}
-      {!isQuizCompleted && currentQ ? (
-        <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-md relative overflow-hidden">
-          {/* Top Progress & Streak */}
-          <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 mb-3">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 font-black text-xs">
-                重組句子 • 第 {currentIndex + 1} / {questions.length} 題
+      {/* ACTIVE QUESTION CONTAINER */}
+      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-md space-y-4">
+        {/* Progress & Header */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-lg bg-amber-100 text-amber-900 text-xs font-bold">
+              {currentQ.categoryName}
+            </span>
+            <div className="flex items-center gap-1">
+              <span className="text-xs font-bold text-slate-500">進度</span>
+              <span className="font-mono font-black text-amber-600 text-sm">
+                {currentIndex + 1}
               </span>
-              <span className="text-xs text-slate-500 font-medium hidden sm:inline">
-                主題：{currentQ.categoryName}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div
-                title="重組句子連對 5 題即可抽寶可夢卡！"
-                className="flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200"
-              >
-                <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                <span>連對: <strong>{currentStreak}</strong>/5 抽卡</span>
-              </div>
-              <div className="text-xs font-bold text-slate-600">
-                得分: <span className="text-amber-600 font-black">{score}</span> / {currentIndex + (isAnswered ? 1 : 0)}
-              </div>
+              <span className="text-slate-400 text-xs">/ {questions ? questions.length : 0}</span>
             </div>
           </div>
 
-          {/* QUESTION PROMPT & VOICE CLUE */}
-          <div className="bg-amber-50/80 rounded-2xl p-3 sm:p-4 border border-amber-200/80 mb-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="text-xs font-black text-amber-800 uppercase tracking-wide">
-                  🧩 點擊下方字卡，排成通順完整的正確句子
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-600">
-                🇬🇧 英文意思：<span className="text-slate-800 font-medium italic">{currentQ.english}</span>
-              </p>
-              {showHint && currentQ.hint && (
-                <p className="text-xs text-amber-700 font-bold mt-1 flex items-center gap-1 animate-fade-in">
-                  <HelpCircle className="w-3.5 h-3.5 text-amber-600" /> {currentQ.hint}
-                </p>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowHint(!showHint)}
-                className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-amber-100 text-amber-800 text-xs font-bold border border-amber-200 transition-all flex items-center gap-1"
-              >
-                <HelpCircle className="w-3.5 h-3.5" />
-                <span>{showHint ? '隱藏提示' : '句型提示'}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handlePlayVoicePrompt}
-                className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black shadow-xs transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
-              >
-                <Volume2 className="w-4 h-4" />
-                <span>聽語音提示</span>
-              </button>
-            </div>
-          </div>
-
-          {/* SENTENCE BUILDER / PLACED AREA */}
-          <div className="mb-3.5 sm:mb-4">
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-bold text-slate-600 flex items-center gap-1">
-                <span>📝 仔仔組合的句子：</span>
-                <span className="text-[11px] text-slate-400 font-normal">（點擊字卡退回）</span>
-              </label>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  disabled={isAnswered || placedTokens.length === 0}
-                  onClick={handleUndo}
-                  className="px-2 py-0.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none flex items-center gap-1"
-                >
-                  <Undo2 className="w-3 h-3" /> 撤銷
-                </button>
-                <button
-                  type="button"
-                  disabled={isAnswered || placedTokens.length === 0}
-                  onClick={handleResetTokens}
-                  className="px-2 py-0.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none flex items-center gap-1"
-                >
-                  <RotateCcw className="w-3 h-3" /> 重排
-                </button>
-              </div>
-            </div>
-
-            {/* Dropped / Placed Token Slots */}
+          <div className="flex-1 max-w-xs h-2 bg-slate-100 rounded-full overflow-hidden hidden sm:block">
             <div
-              className={`min-h-[64px] sm:min-h-[76px] rounded-2xl p-2.5 sm:p-3.5 border-2 transition-all flex flex-wrap items-center gap-2 sm:gap-2.5 ${
-                isAnswered
-                  ? isCorrect
-                    ? 'bg-emerald-50/80 border-emerald-400 ring-2 ring-emerald-400/30'
-                    : 'bg-rose-50/80 border-rose-400 ring-2 ring-rose-400/30'
-                  : placedTokens.length > 0
-                  ? 'bg-amber-50/40 border-amber-300'
-                  : 'bg-slate-50 border-dashed border-slate-300 justify-center'
-              }`}
-            >
-              {placedTokens.length === 0 ? (
-                <div className="text-center text-slate-400 text-xs sm:text-sm font-medium py-2">
-                  👇 請點擊下方字卡按順序排列句子 👇
-                </div>
-              ) : (
-                placedTokens.map((token, idx) => (
-                  <button
-                    key={token.id}
-                    type="button"
-                    onClick={() => handleRemovePlacedToken(token)}
-                    title={isAnswered ? `點擊聆聽「${token.text}」發音` : '點擊放回待選區'}
-                    className={`group relative px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-black text-sm sm:text-base tracking-wide transition-all select-none shadow-xs flex items-center gap-1 cursor-pointer active:scale-95 ${
-                      isAnswered
-                        ? isCorrect
-                          ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200'
-                          : 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-200'
-                        : 'bg-amber-400 hover:bg-amber-300 text-slate-950 hover:scale-105'
-                    }`}
-                  >
-                    <span className="text-[9px] opacity-60 font-mono font-normal">#{idx + 1}</span>
-                    <span>{token.text}</span>
-                    {!isAnswered ? (
-                      <span className="text-xs opacity-0 group-hover:opacity-100 text-slate-900 transition-opacity">✕</span>
-                    ) : (
-                      <Volume2 className="w-3 h-3 opacity-80" />
-                    )}
-                  </button>
-                ))
-              )}
+              className="h-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-300"
+              style={{ width: `${((currentIndex + 1) / Math.max(1, questions ? questions.length : 1)) * 100}%` }}
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200 text-xs font-bold text-amber-900">
+              <Flame className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+              <span>連對: {currentStreak}</span>
+            </div>
+            <div className="px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 font-mono font-bold text-xs border border-emerald-200">
+              得分: {score}
+            </div>
+          </div>
+        </div>
+
+        {/* PROMPT & MEANING CLUE */}
+        <div className="bg-gradient-to-br from-amber-50/60 to-orange-50/40 rounded-2xl p-4 border border-amber-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-inner">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs font-bold text-amber-800">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>將下方打亂的詞語字卡，按正確語序拖放排列成一句通順完整的句子：</span>
+            </div>
+            <div className="text-sm font-semibold text-slate-700">
+              英文語義提示：<span className="text-slate-900 font-serif italic">{currentQ.englishMeaning}</span>
             </div>
           </div>
 
-          {/* AVAILABLE WORD CARDS POOL */}
-          <div className="mb-4 sm:mb-5">
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-bold text-slate-600">
-                🎴 待選字卡（點擊放上）：
-              </label>
-              <span className="text-[11px] text-slate-400 font-medium">
-                剩餘 {availableTokens.length} 張
-              </span>
-            </div>
+          <button
+            type="button"
+            onClick={handlePlayVoicePrompt}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-xs transition shrink-0 active:scale-95 cursor-pointer"
+            title="點擊聽粵語整句提示"
+          >
+            <Volume2 className="w-4 h-4" />
+            <span>聽語音提示</span>
+          </button>
+        </div>
 
-            <div className="min-h-[64px] p-2.5 sm:p-3.5 rounded-2xl bg-slate-100/70 border border-slate-200 flex flex-wrap items-center gap-2 sm:gap-2.5">
+        {/* ANSWER PLACEMENT AREA */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-bold px-1">
+            <span>你的句子排列區（點擊已放字卡可放回）：</span>
+            {placedTokens.length > 0 && !isAnswered && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleUndo}
+                  className="flex items-center gap-1 text-slate-600 hover:text-slate-900 transition"
+                >
+                  <Undo2 className="w-3 h-3" />
+                  <span>撤銷</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetTokens}
+                  className="flex items-center gap-1 text-rose-500 hover:text-rose-700 transition"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>重置</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div
+            className={`min-h-[90px] sm:min-h-[110px] rounded-2xl p-3 sm:p-4 border-2 transition-all flex flex-wrap items-center gap-2 sm:gap-3 ${
+              isAnswered
+                ? isCorrect
+                  ? 'bg-emerald-50 border-emerald-400 ring-2 ring-emerald-200'
+                  : 'bg-rose-50 border-rose-400 ring-2 ring-rose-200'
+                : placedTokens.length > 0
+                ? 'bg-amber-50/40 border-amber-300'
+                : 'bg-slate-50 border-dashed border-slate-300'
+            }`}
+          >
+            {placedTokens.length === 0 ? (
+              <div className="w-full text-center text-slate-400 text-sm font-medium py-3">
+                👆 請點擊下方字卡進行排列...
+              </div>
+            ) : (
+              placedTokens.map((token, idx) => (
+                <button
+                  key={token.id}
+                  type="button"
+                  onClick={() => handleRemovePlacedToken(token)}
+                  className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl border-2 font-serif text-lg sm:text-2xl font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer active:scale-95 ${
+                    isAnswered
+                      ? isCorrect
+                        ? 'bg-white border-emerald-400 text-emerald-900 shadow-emerald-100'
+                        : 'bg-white border-rose-300 text-rose-900 shadow-rose-100'
+                      : 'bg-white border-amber-300 text-slate-800 hover:border-amber-400 hover:bg-amber-50 shadow-amber-100'
+                  }`}
+                >
+                  <span>{token.text}</span>
+                  {!isAnswered && (
+                    <span className="text-[10px] font-mono text-slate-300 ml-1">#{idx + 1}</span>
+                  )}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* AVAILABLE TOKENS POOL */}
+        {!isAnswered && (
+          <div className="space-y-2">
+            <div className="text-xs text-slate-500 font-bold px-1">
+              待選字卡（點擊放入上方）：
+            </div>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center gap-2 sm:gap-3 min-h-[70px]">
               {availableTokens.length === 0 ? (
-                <div className="w-full text-center text-xs text-emerald-600 font-bold py-1.5 flex items-center justify-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> 所有字卡已全部放上！請點擊「檢查答案」！
+                <div className="text-xs text-emerald-600 font-bold flex items-center gap-1 py-1">
+                  <Check className="w-4 h-4" />
+                  <span>已放齊所有字卡，請點擊下方「提交檢查」！</span>
                 </div>
               ) : (
                 availableTokens.map((token) => (
@@ -412,7 +336,7 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
                     key={token.id}
                     type="button"
                     onClick={() => handleSelectToken(token)}
-                    className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white hover:bg-amber-100 border-2 border-amber-300/80 hover:border-amber-400 text-slate-900 font-black text-sm sm:text-base tracking-wide shadow-xs hover:shadow-sm hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all select-none cursor-pointer"
+                    className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white hover:bg-amber-100/70 border-2 border-slate-300 hover:border-amber-400 text-slate-800 font-serif text-lg sm:text-2xl font-bold shadow-sm transition-all active:scale-95 cursor-pointer"
                   >
                     {token.text}
                   </button>
@@ -420,161 +344,71 @@ export const SentenceScramblePractice: React.FC<SentenceScramblePracticeProps> =
               )}
             </div>
           </div>
+        )}
 
-          {/* FEEDBACK & EXPLANATION (AFTER ANSWERED) */}
-          {isAnswered && (
-            <div
-              className={`p-3 sm:p-4 rounded-2xl mb-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-scale-up ${
-                isCorrect
-                  ? 'bg-emerald-100/80 border border-emerald-300 text-emerald-950'
-                  : 'bg-rose-100/80 border border-rose-300 text-rose-950'
-              }`}
-            >
-              <div className="flex items-start gap-2.5">
-                {isCorrect ? (
-                  <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
-                ) : (
-                  <XCircle className="w-6 h-6 text-rose-600 shrink-0 mt-0.5" />
-                )}
-                <div>
-                  <h4 className="text-sm sm:text-base font-black">
-                    {isCorrect ? '🎉 答啱咗！好棒！' : '❌ 順序仲有啲小問題，唔緊要！'}
-                  </h4>
-                  <div className="text-xs sm:text-sm font-bold mt-0.5 text-slate-800">
-                    正確句子：<span className="text-emerald-700 font-black">{currentQ.targetSentence}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-[11px] font-bold text-slate-500">相關核心詞：</span>
-                    {currentQ.keyVocab.map((kv, i) => (
-                      <span key={i} className="px-1.5 py-0.2 rounded bg-white text-[11px] font-black text-slate-800 shadow-2xs">
-                        {kv}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => speakCantonese(currentQ.targetSentence)}
-                className="px-3 py-1.5 rounded-xl bg-white hover:bg-emerald-50 text-slate-800 text-xs font-bold border border-slate-200 shadow-xs flex items-center gap-1 shrink-0"
-              >
-                <Volume2 className="w-3.5 h-3.5 text-amber-600" />
-                <span>朗讀正確句子</span>
-              </button>
+        {/* FEEDBACK & EXPLANATION WHEN ANSWERED */}
+        {isAnswered && (
+          <div
+            className={`p-4 rounded-2xl border space-y-2 animate-fadeIn ${
+              isCorrect
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
+                : 'bg-rose-50 border-rose-300 text-rose-950'
+            }`}
+          >
+            <div className="flex items-center gap-2 text-base font-black">
+              {isCorrect ? (
+                <>
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  <span>恭喜答啱！句子排列通順 🎉</span>
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-5 h-5 text-rose-600" />
+                  <span>排列順序有誤，再接再厲！💪</span>
+                </>
+              )}
             </div>
-          )}
 
-          {/* ACTION BUTTON: CHECK OR NEXT */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pt-1">
-            {!isAnswered ? (
-              <>
-                <div className="text-xs text-slate-500 font-medium">
-                  {availableTokens.length > 0 ? (
-                    <span className="text-amber-700 bg-amber-100/70 px-2.5 py-1 rounded-xl border border-amber-200 inline-flex items-center gap-1 font-bold text-xs">
-                      ⚠️ 仲有 {availableTokens.length} 張字卡未放上
-                    </span>
-                  ) : (
-                    <span className="text-emerald-700 bg-emerald-100/70 px-2.5 py-1 rounded-xl border border-emerald-200 inline-flex items-center gap-1 font-bold text-xs">
-                      ✨ 字卡已全部放上，請點擊「檢查答案」！
-                    </span>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  disabled={availableTokens.length > 0 || placedTokens.length === 0}
-                  onClick={handleCheckAnswer}
-                  className="w-full sm:w-auto px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-sm sm:text-base shadow-md transition-all disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-                >
-                  <Check className="w-4 h-4" />
-                  <span>{availableTokens.length > 0 ? `請放上所有字卡 (${placedTokens.length}/${currentQ.segments.length})` : '檢查答案'}</span>
-                </button>
-              </>
-            ) : (
-              <div className="w-full flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="w-full sm:w-auto px-6 py-2.5 sm:py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm sm:text-base shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 animate-bounce"
-                >
-                  <span>{currentIndex + 1 >= questions.length ? '查看重組特訓成績' : '下一題'}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+            <div className="space-y-1 pt-1">
+              <div className="text-xs font-bold text-slate-600">正確標準句子：</div>
+              <div className="text-lg sm:text-xl font-serif font-bold text-slate-900 bg-white/80 p-2.5 rounded-xl border border-slate-200">
+                {currentQ.targetSentence}
               </div>
-            )}
-          </div>
-        </div>
-      ) : isQuizCompleted ? (
-        /* QUIZ COMPLETED SUMMARY SCREEN */
-        <div className="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200 shadow-xl text-center">
-          <div className="w-20 h-20 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4 shadow-inner">
-            <Trophy className="w-10 h-10" />
-          </div>
-
-          <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-1">
-            🎊 恭喜 Jovan 完成重組句子特訓！
-          </h3>
-          <p className="text-sm text-slate-600 mb-6">
-            仔仔完成了 {questions.length} 道句子重組練習，掌握了多個重要語法句型！
-          </p>
-
-          {/* SCORE BOARD */}
-          <div className="max-w-md mx-auto grid grid-cols-2 gap-4 mb-8">
-            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
-              <span className="text-xs text-slate-500 font-bold block">總得分</span>
-              <span className="text-3xl font-black text-amber-600 font-mono">
-                {score} <span className="text-sm text-slate-400 font-normal">/ {questions.length}</span>
-              </span>
-            </div>
-            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
-              <span className="text-xs text-slate-500 font-bold block">正確率</span>
-              <span className="text-3xl font-black text-emerald-600 font-mono">
-                {Math.round((score / Math.max(1, questions.length)) * 100)}%
-              </span>
+              <p className="text-xs text-slate-500 pt-1">💡 語法解析：{currentQ.explanation}</p>
             </div>
           </div>
+        )}
 
-          {/* WRONG QUESTIONS REVIEW */}
-          {wrongQuestions.length > 0 && (
-            <div className="max-w-xl mx-auto text-left bg-rose-50/80 rounded-2xl p-5 border border-rose-200 mb-8">
-              <h4 className="text-sm font-black text-rose-900 mb-3 flex items-center gap-1.5">
-                <RotateCcw className="w-4 h-4" /> 本輪需要加強的句子 ({wrongQuestions.length} 句)：
-              </h4>
-              <div className="space-y-2">
-                {wrongQuestions.map((wq, i) => (
-                  <div key={i} className="p-3 bg-white rounded-xl border border-rose-200/60 text-xs text-slate-800">
-                    <span className="font-bold text-rose-700">第 {i + 1} 句：</span> {wq.targetSentence}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ACTION BUTTONS */}
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            {wrongQuestions.length > 0 && (
-              <button
-                type="button"
-                onClick={() => startQuiz(wrongQuestions)}
-                className="px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-md transition flex items-center gap-2 cursor-pointer"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span>專項重溫這 {wrongQuestions.length} 個錯句</span>
-              </button>
-            )}
-
+        {/* BOTTOM ACTION BUTTON */}
+        <div className="pt-2">
+          {!isAnswered ? (
             <button
               type="button"
-              onClick={() => startQuiz()}
-              className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm shadow-md transition flex items-center gap-2 cursor-pointer"
+              id="submit-scramble-btn"
+              onClick={handleCheckAnswer}
+              disabled={placedTokens.length === 0}
+              className={`w-full py-3.5 rounded-2xl font-black text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer ${
+                isAllPlaced
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20 active:scale-98'
+                  : 'bg-slate-800 hover:bg-slate-900 text-white'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              <RefreshCw className="w-4 h-4" />
-              <span>換一組全新句子特訓</span>
+              <Check className="w-4 h-4" />
+              <span>{isAllPlaced ? '完成排列，提交檢查！🚀' : '提交檢查答案'}</span>
             </button>
-          </div>
+          ) : (
+            <button
+              type="button"
+              id="next-scramble-btn"
+              onClick={handleNext}
+              className="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+            >
+              <span>{currentIndex + 1 >= (questions ? questions.length : 0) ? '查看本輪成績' : '下一題'}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
         </div>
-      ) : null}
+      </div>
     </div>
   );
 };

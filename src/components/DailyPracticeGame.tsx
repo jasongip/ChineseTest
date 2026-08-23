@@ -105,7 +105,13 @@ export const DailyPracticeGame: React.FC = () => {
     },
   ];
 
-  const currentQuiz = quizPool[quizIndex % quizPool.length];
+  const activeCards = flashcardsData[activeCategory] || [];
+  const currentQuiz = quizPool && quizPool.length > 0 ? quizPool[quizIndex % quizPool.length] : {
+    q: '',
+    audioText: '',
+    options: [],
+    correct: '',
+  };
 
   const handleCardClick = (item: { char: string; jyutping: string }) => {
     audioService.playClick();
@@ -199,12 +205,12 @@ export const DailyPracticeGame: React.FC = () => {
             </h3>
           </div>
           <span className="text-xs font-bold text-gray-500">
-            共 {flashcardsData[activeCategory].length} 個核心詞彙
+            共 {activeCards.length} 個核心詞彙
           </span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
-          {flashcardsData[activeCategory].map((item, i) => (
+          {activeCards.map((item, i) => (
             <div
               key={i}
               onClick={() => handleCardClick(item)}
