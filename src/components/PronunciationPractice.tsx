@@ -9,13 +9,14 @@ import {
   RotateCcw,
   ArrowRight,
   Flame,
-  Check,
   Radio,
   Square,
   Eye,
   EyeOff,
   Globe,
   Settings2,
+  Check,
+  ChevronRight,
 } from 'lucide-react';
 
 interface PronunciationPracticeProps {
@@ -23,6 +24,7 @@ interface PronunciationPracticeProps {
   questionIndex: number;
   totalQuestions: number;
   streak: number;
+  correctCount: number;
   onAnswerResult: (isCorrect: boolean) => void;
   onNextQuestion: () => void;
   onTriggerGacha: (count: number) => void;
@@ -84,34 +86,45 @@ function evaluateCantonesePronunciation(
     const rawClean = rawCandidate.trim().replace(/[，。！？\s]/g, '');
     const tradClean = normalizeToTraditional(rawClean);
 
-    // 1. Direct or normalized match (e.g. "呢個係眼睛" -> contains "眼睛"; or "学校" -> "學校")
-    if (tradClean.includes(cleanTarget) || cleanTarget.includes(tradClean) || rawClean.includes(cleanTarget)) {
-      return { isMatch: true, confidenceReason: '字詞精確吻合', bestText: tradClean };
+    // Rule 1: The recognized speech MUST contain the FULL target word
+    // (e.g. recognized "呢個係陽光" or "陽光呀" contains full "陽光")
+    if (tradClean.includes(cleanTarget) || rawClean.includes(cleanTarget)) {
+      return { isMatch: true, confidenceReason: '完整字詞吻合', bestText: tradClean };
     }
 
-    // 2. Character-by-character phonetic comparison
+    // If recognized text is shorter than target word (e.g. only said 1 char for a 2-char word like "陽" for "陽光"), strictly reject
+    if (tradClean.length < cleanTarget.length && rawClean.length < cleanTarget.length) {
+      continue;
+    }
+
+    // Rule 2: Character-by-character phonetic comparison (All characters in the target word must match!)
     const targetChars = Array.from(cleanTarget);
     const recChars = Array.from(tradClean);
 
-    let matchedCharCount = 0;
-    targetChars.forEach((tChar, i) => {
-      const tPhonetic = JYUTPING_MAP[tChar];
-      const rChar = recChars[i];
-      if (rChar === tChar) {
-        matchedCharCount++;
-      } else if (rChar && tPhonetic && JYUTPING_MAP[rChar] === tPhonetic) {
-        // Homophone match! (e.g. 目 -> 木)
-        matchedCharCount++;
+    // Scan for substring alignment in recChars
+    for (let startIdx = 0; startIdx <= recChars.length - targetChars.length; startIdx++) {
+      let fullMatchCount = 0;
+      for (let j = 0; j < targetChars.length; j++) {
+        const tChar = targetChars[j];
+        const rChar = recChars[startIdx + j];
+        const tPhonetic = JYUTPING_MAP[tChar];
+        if (rChar === tChar) {
+          fullMatchCount++;
+        } else if (rChar && tPhonetic && JYUTPING_MAP[rChar] === tPhonetic) {
+          // Homophone match (e.g. 目 -> 木)
+          fullMatchCount++;
+        }
       }
-    });
 
-    if (matchedCharCount >= Math.ceil(targetChars.length * 0.75)) {
-      return { isMatch: true, confidenceReason: '同音字／拼音吻合', bestText: tradClean };
+      // MUST match 100% of all characters in the target word
+      if (fullMatchCount === targetChars.length) {
+        return { isMatch: true, confidenceReason: '完整讀音吻合', bestText: tradClean };
+      }
     }
   }
 
   const primaryRec = normalizeToTraditional(candidates[0] || '');
-  return { isMatch: false, confidenceReason: '讀音不相符', bestText: primaryRec };
+  return { isMatch: false, confidenceReason: '讀音不完整或不符', bestText: primaryRec };
 }
 
 export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
@@ -119,6 +132,7 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
   questionIndex,
   totalQuestions,
   streak,
+  correctCount,
   onAnswerResult,
   onNextQuestion,
   onTriggerGacha,
@@ -138,11 +152,15 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
   const recognitionRef = useRef<any>(null);
   const timerRef = useRef<any>(null);
   const candidateTranscriptsRef = useRef<string[]>([]);
+  const isRecordingRef = useRef<boolean>(false);
+  const countdownSecondsRef = useRef<number>(5);
 
   // Reset states on new question
   useEffect(() => {
     setIsRecording(false);
+    isRecordingRef.current = false;
     setCountdownSeconds(5);
+    countdownSecondsRef.current = 5;
     setRecognizedTranscript('');
     setLiveHeardText('');
     setPracticeStatus('idle');
@@ -160,6 +178,7 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      isRecordingRef.current = false;
       if (timerRef.current) clearInterval(timerRef.current);
       if (recognitionRef.current) {
         try {
@@ -171,6 +190,7 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
 
   const handleFinishRecording = (candidates: string[]) => {
     if (timerRef.current) clearInterval(timerRef.current);
+    isRecordingRef.current = false;
     setIsRecording(false);
     setPracticeStatus('evaluating');
 
@@ -191,15 +211,31 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
     }, 350);
   };
 
-  const startVoiceRecording = () => {
+  const startVoiceRecording = async () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert('抱歉，此瀏覽器未支援語音辨識，請使用 Google Chrome、Edge 或 Safari。');
+      alert('抱歉，此瀏覽器未支援語音辨識功能。建議使用 Google Chrome / Edge 或 Safari 瀏覽器打開！');
       return;
     }
 
     try {
       audioService.playClick();
+
+      // Check and request microphone permission explicitly
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          // Stop track to release audio resource so SpeechRecognition can take over
+          micStream.getTracks().forEach((track) => track.stop());
+        } catch (micErr: any) {
+          console.warn('Microphone permission request failed:', micErr);
+          if (micErr.name === 'NotAllowedError' || micErr.name === 'PermissionDeniedError') {
+            alert('請在瀏覽器網址列旁邊允許「麥克風」存取權限，以便核對廣東話讀音！');
+            return;
+          }
+        }
+      }
+
       if (recognitionRef.current) {
         try {
           recognitionRef.current.abort();
@@ -207,9 +243,8 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
       }
 
       const recognition = new SpeechRecognition();
-      // Use chosen Cantonese language code (zh-HK / yue-Hant-HK / zh-CN)
       recognition.lang = speechLang;
-      recognition.continuous = false;
+      recognition.continuous = true;
       recognition.interimResults = true;
       recognition.maxAlternatives = 5;
 
@@ -218,10 +253,12 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
       setLiveHeardText('');
       setPracticeStatus('recording');
       setIsRecording(true);
+      isRecordingRef.current = true;
       setCountdownSeconds(5);
+      countdownSecondsRef.current = 5;
 
       recognition.onresult = (event: any) => {
-        const foundList: string[] = [];
+        const foundList: string[] = [...candidateTranscriptsRef.current];
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const res = event.results[i];
           for (let k = 0; k < res.length; k++) {
@@ -233,23 +270,31 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
         }
         if (foundList.length > 0) {
           candidateTranscriptsRef.current = foundList;
-          setLiveHeardText(normalizeToTraditional(foundList[0]));
+          setLiveHeardText(normalizeToTraditional(foundList[foundList.length - 1] || foundList[0]));
         }
       };
 
       recognition.onerror = (event: any) => {
-        console.warn('Speech recognition status:', event.error);
+        console.warn('Speech recognition warning/error:', event.error);
         if (event.error === 'not-allowed') {
           alert('請允許麥克風權限以進行讀音練習！');
           setIsRecording(false);
+          isRecordingRef.current = false;
           setPracticeStatus('idle');
           if (timerRef.current) clearInterval(timerRef.current);
         }
       };
 
       recognition.onend = () => {
-        if (isRecording) {
-          handleFinishRecording(candidateTranscriptsRef.current);
+        if (isRecordingRef.current) {
+          // If ended unexpectedly early while time remains, attempt to restart recognition
+          if (countdownSecondsRef.current > 1) {
+            try {
+              recognition.start();
+            } catch {
+              // Ignore if cannot restart
+            }
+          }
         }
       };
 
@@ -258,27 +303,33 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
 
       // 5-second countdown timer
       let timeLeft = 5;
+      countdownSecondsRef.current = timeLeft;
       if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = setInterval(() => {
         timeLeft -= 1;
+        countdownSecondsRef.current = timeLeft;
         setCountdownSeconds(timeLeft);
         if (timeLeft <= 0) {
           clearInterval(timerRef.current);
+          isRecordingRef.current = false;
           try {
             recognition.stop();
           } catch {}
           handleFinishRecording(candidateTranscriptsRef.current);
         }
       }, 1000);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to start speech recognition:', err);
       setIsRecording(false);
+      isRecordingRef.current = false;
       setPracticeStatus('idle');
+      alert('啟動錄音失敗：' + (err.message || '請確認麥克風設備已連接'));
     }
   };
 
   const stopVoiceRecordingEarly = () => {
     audioService.playPop();
+    isRecordingRef.current = false;
     if (timerRef.current) clearInterval(timerRef.current);
     if (recognitionRef.current) {
       try {
@@ -286,14 +337,6 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
       } catch {}
     }
     handleFinishRecording(candidateTranscriptsRef.current);
-  };
-
-  // Manual Parent Override (Mark Correct)
-  const handleParentMarkCorrect = () => {
-    audioService.playCelebration();
-    setPracticeStatus('correct');
-    setMatchReason('家長覆核判定為正確');
-    onAnswerResult(true);
   };
 
   return (
@@ -317,7 +360,7 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
           </div>
         </div>
 
-        {/* Action badges: Language switch + Streak */}
+        {/* Action badges: Language switch + Streak & Draw milestone */}
         <div className="flex items-center gap-2">
           {/* Language selector toggle */}
           <div className="relative">
@@ -379,9 +422,13 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
             )}
           </div>
 
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 font-black text-xs">
+            <span>🎁 答對抽卡：<strong className="text-purple-600 font-mono">{correctCount % 10}</strong>/10 題</span>
+          </div>
+
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 font-black text-xs">
             <Flame className="w-4 h-4 text-orange-500 fill-orange-500 animate-pulse" />
-            <span>連對 {streak} 題</span>
+            <span>累積對 {correctCount} 題</span>
           </div>
         </div>
       </div>
@@ -391,11 +438,11 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
         {/* Instruction badge */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-50 text-purple-800 text-xs font-bold border border-purple-200">
           <Radio className="w-3.5 h-3.5 text-purple-600 animate-pulse" />
-          <span>請看字大聲朗讀（預設錄音 5 秒，系統將自動核對讀音）</span>
+          <span>請看字大聲朗讀（預設錄音 5 秒，每累積答對 10 題即可抽寶可夢卡包）</span>
         </div>
 
         {/* Target Word Display Card */}
-        <div className="max-w-md mx-auto py-6 px-4 bg-gradient-to-b from-slate-50 to-purple-50/40 rounded-3xl border-2 border-purple-200/80 shadow-inner space-y-3 relative">
+        <div className="max-w-md mx-auto py-8 px-4 bg-gradient-to-b from-slate-50 to-purple-50/40 rounded-3xl border-2 border-purple-200/80 shadow-inner space-y-3 relative">
           <div className="text-5xl sm:text-6xl font-black font-serif text-slate-900 tracking-wider">
             {currentVocab.word}
           </div>
@@ -424,8 +471,6 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
               </button>
             )}
           </div>
-
-          <div className="text-xs text-slate-500">{currentVocab.english}</div>
         </div>
 
         {/* INTERACTIVE VOICE RECORDING BUTTON AREA */}
@@ -518,7 +563,7 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
 
           {/* INCORRECT RESULT CARD */}
           {practiceStatus === 'incorrect' && (
-            <div className="p-4 sm:p-5 rounded-2xl bg-rose-50 border-2 border-rose-300 max-w-md mx-auto space-y-3 animate-in zoom-in-95">
+            <div className="p-4 sm:p-5 rounded-2xl bg-rose-50 border-2 border-rose-300 max-w-md mx-auto space-y-4 animate-in zoom-in-95">
               <div className="flex items-center justify-center gap-2 text-rose-800 font-black text-lg">
                 <XCircle className="w-6 h-6 text-rose-600" />
                 <span>發音需要再清晰一點喔！</span>
@@ -528,12 +573,12 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
                 系統聽到的內容：<strong className="text-rose-700">{recognizedTranscript ? `「${recognizedTranscript}」` : '（未清晰辨識到聲音）'}</strong>
               </div>
 
-              {/* Practice guide with Audio play */}
-              <div className="flex items-center justify-center gap-2 pt-1">
+              {/* Practice actions */}
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => speakCantonese(currentVocab.word)}
-                  className="px-3.5 py-1.5 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-900 text-xs font-black transition flex items-center gap-1 cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-900 text-xs font-black transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <Volume2 className="w-4 h-4 text-purple-700" />
                   <span>聽標準示範音</span>
@@ -542,33 +587,20 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
                 <button
                   type="button"
                   onClick={startVoiceRecording}
-                  className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-black transition flex items-center gap-1 cursor-pointer shadow-xs"
+                  className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-black transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>再錄一次</span>
                 </button>
-              </div>
 
-              {/* PARENT OVERRIDE TOOLBAR */}
-              <div className="pt-2 border-t border-rose-200/80 flex items-center justify-between text-xs">
-                <span className="text-slate-400 text-[11px]">家長覆核判定：</span>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={handleParentMarkCorrect}
-                    className="px-2.5 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold transition flex items-center gap-1 cursor-pointer text-[11px]"
-                  >
-                    <Check className="w-3 h-3 text-emerald-700" />
-                    <span>家長算啱</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onNextQuestion}
-                    className="px-2.5 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold transition cursor-pointer text-[11px]"
-                  >
-                    <span>跳過</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={onNextQuestion}
+                  className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                >
+                  <span>跳過下一題</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           )}

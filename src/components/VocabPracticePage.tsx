@@ -507,7 +507,7 @@ export const VocabPracticePage: React.FC = () => {
       id: 'mode_pronunciation',
       num: '4',
       title: '朗讀發音特訓',
-      desc: '看詞語大聲朗讀•5秒智能語音核對廣東話讀音',
+      desc: '看詞語大聲朗讀•累積答對10題即獲抽卡',
       icon: '🎤',
       maxPoolCount: VOCAB_PRACTICE_LIST.length,
       color: 'from-purple-600 to-indigo-600',
@@ -1025,14 +1025,16 @@ export const VocabPracticePage: React.FC = () => {
           questionIndex={currentIndex}
           totalQuestions={vocabQuestions.length}
           streak={streak}
+          correctCount={score}
           onAnswerResult={(isCorrect) => {
             recordStat('mode_pronunciation', isCorrect);
             if (isCorrect) {
-              setScore((prev) => prev + 1);
-              const nextStreak = streak + 1;
-              setStreak(nextStreak);
-              if (nextStreak > 0 && nextStreak % 10 === 0) {
-                triggerPokemonDraw(nextStreak);
+              const newScore = score + 1;
+              setScore(newScore);
+              setStreak((prev) => prev + 1);
+              // Cumulative reward: every 10 correct answers triggers gacha draw (no streak required)
+              if (newScore > 0 && newScore % 10 === 0) {
+                triggerPokemonDraw(newScore);
               }
             } else {
               setStreak(0);
