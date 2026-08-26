@@ -9,6 +9,7 @@ import { SentenceScramblePractice } from './SentenceScramblePractice';
 import { ReadingComprehensionPractice } from './ReadingComprehensionPractice';
 import { DictationCanvasPractice } from './DictationCanvasPractice';
 import { StrokeTracerPractice } from './StrokeTracerPractice';
+import { PronunciationPractice } from './PronunciationPractice';
 import { PasswordAuthModal } from './PasswordAuthModal';
 import { speakCantonese, audioService } from '../utils/audio';
 import {
@@ -36,6 +37,7 @@ import {
   Play,
   BarChart3,
   Edit3,
+  Mic,
   Lock,
 } from 'lucide-react';
 
@@ -43,6 +45,7 @@ type PracticeMode =
   | 'mode_audio'
   | 'mode_missing'
   | 'mode_english'
+  | 'mode_pronunciation'
   | 'mode_scramble'
   | 'mode_story'
   | 'mode_dictation'
@@ -285,6 +288,7 @@ export const VocabPracticePage: React.FC = () => {
       activeMode === 'mode_audio' ||
       activeMode === 'mode_missing' ||
       activeMode === 'mode_english' ||
+      activeMode === 'mode_pronunciation' ||
       activeMode === 'mode_dictation'
     ) {
       const pool = customList || VOCAB_PRACTICE_LIST;
@@ -500,17 +504,26 @@ export const VocabPracticePage: React.FC = () => {
       color: 'from-emerald-500 to-teal-600',
     },
     {
-      id: 'mode_scramble',
+      id: 'mode_pronunciation',
       num: '4',
+      title: '朗讀發音特訓',
+      desc: '看詞語大聲朗讀•5秒智能語音核對廣東話讀音',
+      icon: '🎤',
+      maxPoolCount: VOCAB_PRACTICE_LIST.length,
+      color: 'from-purple-600 to-indigo-600',
+    },
+    {
+      id: 'mode_scramble',
+      num: '5',
       title: '重組句子',
       desc: '字卡排列通順完整句子•連對5題即獲抽卡',
       icon: '✍️',
       maxPoolCount: SCRAMBLE_SENTENCES_DATA.length,
-      color: 'from-purple-500 to-violet-600',
+      color: 'from-indigo-500 to-violet-600',
     },
     {
       id: 'mode_story',
-      num: '5',
+      num: '6',
       title: '短文理解',
       desc: '150篇精選生活科普短文•累積10題抽卡',
       icon: '📖',
@@ -519,7 +532,7 @@ export const VocabPracticePage: React.FC = () => {
     },
     {
       id: 'mode_dictation',
-      num: '6',
+      num: '7',
       title: '補筆畫特訓',
       desc: isStrokeUnlocked ? '補上漢字缺漏筆畫•連續對10題抽卡' : '補上漢字缺漏筆畫 (內部測試・需密碼)',
       icon: '✏️',
@@ -528,7 +541,7 @@ export const VocabPracticePage: React.FC = () => {
     },
     {
       id: 'mode_tracer',
-      num: '7',
+      num: '8',
       title: '筆順跟寫 (模式B)',
       desc: isStrokeUnlocked ? '標準筆順逐步跟寫•練夠20字送卡包' : '標準筆順逐步跟寫 (內部測試・需密碼)',
       icon: '🖌️',
@@ -537,7 +550,7 @@ export const VocabPracticePage: React.FC = () => {
     },
     {
       id: 'mode_library',
-      num: '8',
+      num: '9',
       title: '詞庫總覽點讀',
       desc: '180+ 核心詞彙即時點讀速查與複習',
       icon: '📚',
@@ -1005,6 +1018,40 @@ export const VocabPracticePage: React.FC = () => {
             </button>
           </div>
         </div>
+      ) : activeMode === 'mode_pronunciation' && currentVocabItem ? (
+        /* MODE 4: PRONUNCIATION / SPEECH RECOGNITION PRACTICE */
+        <PronunciationPractice
+          currentVocab={currentVocabItem}
+          questionIndex={currentIndex}
+          totalQuestions={vocabQuestions.length}
+          streak={streak}
+          onAnswerResult={(isCorrect) => {
+            recordStat('mode_pronunciation', isCorrect);
+            if (isCorrect) {
+              setScore((prev) => prev + 1);
+              const nextStreak = streak + 1;
+              setStreak(nextStreak);
+              if (nextStreak > 0 && nextStreak % 10 === 0) {
+                triggerPokemonDraw(nextStreak);
+              }
+            } else {
+              setStreak(0);
+              setWrongVocabItems((prev) => {
+                if (prev.some((x) => x.id === currentVocabItem.id)) return prev;
+                return [...prev, currentVocabItem];
+              });
+            }
+          }}
+          onNextQuestion={() => {
+            if (currentIndex + 1 >= vocabQuestions.length) {
+              setIsQuizCompleted(true);
+              audioService.playCelebration();
+            } else {
+              setCurrentIndex((prev) => prev + 1);
+            }
+          }}
+          onTriggerGacha={(streakCount) => triggerPokemonDraw(streakCount)}
+        />
       ) : activeMode === 'mode_scramble' ? (
         /* MODE 4: SENTENCE SCRAMBLE (5-STREAK REWARD) */
         <SentenceScramblePractice
