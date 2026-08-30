@@ -471,6 +471,15 @@ export const PronunciationPractice: React.FC<PronunciationPracticeProps> = ({
               </button>
             )}
           </div>
+
+          {/* English Meaning / Explanation */}
+          {currentVocab.english && (
+            <div className="pt-1">
+              <span className="inline-block px-3 py-1 rounded-xl bg-purple-100/60 text-purple-900 text-xs font-bold border border-purple-200/70">
+                📖 英文：{currentVocab.english}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* INTERACTIVE VOICE RECORDING BUTTON AREA */}
