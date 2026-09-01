@@ -201,24 +201,79 @@ class AudioManager {
 
 export const audioService = new AudioManager();
 
+export type VoiceEngineType = 'auto' | 'cloud_hk' | 'native_ios' | 'native_web';
+
+export interface VoiceConfig {
+  engine: VoiceEngineType;
+  speed: number;
+  pitch: number;
+}
+
+const STORAGE_KEY_VOICE_CONFIG = 'cantonese_voice_engine_config_v2';
+
+export function getVoiceConfig(): VoiceConfig {
+  if (typeof window === 'undefined') {
+    return { engine: 'auto', speed: 0.88, pitch: 1.02 };
+  }
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_VOICE_CONFIG);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && parsed.engine) {
+        return parsed;
+      }
+    }
+  } catch {}
+  return { engine: 'auto', speed: 0.88, pitch: 1.02 };
+}
+
+export function saveVoiceConfig(config: VoiceConfig) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_KEY_VOICE_CONFIG, JSON.stringify(config));
+  } catch {}
+}
+
+export function getSystemVoices(): SpeechSynthesisVoice[] {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return [];
+  try {
+    return window.speechSynthesis.getVoices() || [];
+  } catch {
+    return [];
+  }
+}
+
 // Speech Synthesis for Cantonese (zh-HK / yue-HK / zh-YUE)
 export function getCantoneseVoice(): SpeechSynthesisVoice | null {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
-  const voices = window.speechSynthesis.getVoices();
+  const voices = getSystemVoices();
   if (!voices || voices.length === 0) return null;
 
   // 1. Strict Cantonese voice check (iOS Safari, Mac, Chrome, Edge)
-  // Apple iOS voices: Sin-ji, Tracy, Danny, Cantonese, zh-HK, yue-HK, zh-YUE
   const cantoneseVoice = voices.find((v) => {
     const lang = (v.lang || '').toLowerCase().replace('_', '-');
     const name = (v.name || '').toLowerCase();
-    
-    // Explicit language tag matching Cantonese
-    if (lang === 'zh-hk' || lang === 'yue-hk' || lang === 'zh-yue' || lang === 'yue-hant-hk' || lang.startsWith('yue')) {
+
+    if (
+      lang === 'zh-hk' ||
+      lang === 'yue-hk' ||
+      lang === 'zh-yue' ||
+      lang === 'yue-hant-hk' ||
+      lang.startsWith('yue')
+    ) {
       return true;
     }
-    // Name matching Apple iOS / iPadOS Cantonese voices
-    if (name.includes('cantonese') || name.includes('hong kong') || name.includes('廣東話') || name.includes('粵語') || name.includes('sin-ji') || name.includes('sinji') || name.includes('hiuyu')) {
+    // Apple iOS / iPadOS Cantonese voices (Sin-ji, Hiuyu, Tracy, Danny, Cantonese)
+    if (
+      name.includes('cantonese') ||
+      name.includes('hong kong') ||
+      name.includes('廣東話') ||
+      name.includes('粵語') ||
+      name.includes('sin-ji') ||
+      name.includes('sinji') ||
+      name.includes('hiuyu') ||
+      name.includes('tracy') ||
+      name.includes('danny')
+    ) {
       return true;
     }
     return false;
@@ -235,33 +290,148 @@ export function getCantoneseVoice(): SpeechSynthesisVoice | null {
   return secondaryVoice || null;
 }
 
-export function speakCantonese(text: string, onEnd?: () => void) {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = () => {
+    try {
+      window.speechSynthesis.getVoices();
+    } catch {}
+  };
+}
+
+let activeAudioElement: HTMLAudioElement | null = null;
+
+// Play cloud-based Cantonese audio (Google TTS endpoint / 100% works on any OS/browser)
+export function playCloudCantoneseAudio(text: string, onEnd?: () => void) {
+  if (typeof window === 'undefined') {
     if (onEnd) onEnd();
     return;
   }
 
-  // iOS Safari audio activation fix: ensure synthesis is active
-  window.speechSynthesis.cancel();
-
-  const utterance = new SpeechSynthesisUtterance(text);
-  
-  // Set explicit BCP 47 language code for Cantonese
-  utterance.lang = 'zh-HK';
-  utterance.rate = 0.85; // Slightly slower for clarity in children's assessment
-  utterance.pitch = 1.05;
-
-  const targetVoice = getCantoneseVoice();
-  if (targetVoice) {
-    utterance.voice = targetVoice;
-    utterance.lang = targetVoice.lang || 'zh-HK';
+  // Stop previous audio
+  if (activeAudioElement) {
+    try {
+      activeAudioElement.pause();
+      activeAudioElement.currentTime = 0;
+    } catch {}
+    activeAudioElement = null;
   }
 
-  if (onEnd) {
-    utterance.onend = onEnd;
-    utterance.onerror = onEnd;
+  try {
+    const encoded = encodeURIComponent(text.trim());
+    const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=zh-HK&client=tw-ob&q=${encoded}`;
+    const audio = new Audio(audioUrl);
+    activeAudioElement = audio;
+
+    let hasEnded = false;
+    const finish = () => {
+      if (!hasEnded) {
+        hasEnded = true;
+        activeAudioElement = null;
+        if (onEnd) onEnd();
+      }
+    };
+
+    audio.onended = finish;
+    audio.onerror = () => {
+      // If error occurs, call onEnd
+      finish();
+    };
+
+    // Auto timeout safety
+    setTimeout(finish, 6000);
+
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        finish();
+      });
+    }
+  } catch {
+    if (onEnd) onEnd();
+  }
+}
+
+export function speakCantonese(text: string, onEnd?: () => void) {
+  if (typeof window === 'undefined') {
+    if (onEnd) onEnd();
+    return;
   }
 
-  // Speak with slight delay for iOS Safari if just cancelled
-  window.speechSynthesis.speak(utterance);
+  const cleanText = text.replace(/[\n\r]/g, ' ').trim();
+  if (!cleanText) {
+    if (onEnd) onEnd();
+    return;
+  }
+
+  const config = getVoiceConfig();
+
+  // If Cloud Engine is selected directly:
+  if (config.engine === 'cloud_hk') {
+    playCloudCantoneseAudio(cleanText, onEnd);
+    return;
+  }
+
+  // If browser doesn't have Web Speech API:
+  if (!('speechSynthesis' in window)) {
+    playCloudCantoneseAudio(cleanText, onEnd);
+    return;
+  }
+
+  try {
+    const cantoneseVoice = getCantoneseVoice();
+
+    // If on Auto or no Cantonese voice installed in OS, seamlessly fallback to cloud audio
+    if (!cantoneseVoice && (config.engine === 'auto' || config.engine === 'native_ios')) {
+      playCloudCantoneseAudio(cleanText, onEnd);
+      return;
+    }
+
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'zh-HK';
+    utterance.rate = config.speed || 0.88;
+    utterance.pitch = config.pitch || 1.02;
+
+    if (cantoneseVoice) {
+      utterance.voice = cantoneseVoice;
+      utterance.lang = cantoneseVoice.lang || 'zh-HK';
+    }
+
+    let completed = false;
+    const handleEnd = () => {
+      if (!completed) {
+        completed = true;
+        if (onEnd) onEnd();
+      }
+    };
+
+    utterance.onend = handleEnd;
+    utterance.onerror = () => {
+      // If native fails, fallback to cloud audio
+      if (config.engine === 'auto') {
+        playCloudCantoneseAudio(cleanText, onEnd);
+      } else {
+        handleEnd();
+      }
+    };
+
+    // Native speak
+    window.speechSynthesis.speak(utterance);
+
+    // Timeout safety fallback
+    if (config.engine === 'auto') {
+      setTimeout(() => {
+        if (!window.speechSynthesis.speaking && !completed) {
+          // In case speech synthesis hung silently without playing
+          handleEnd();
+        }
+      }, 5000);
+    }
+  } catch {
+    playCloudCantoneseAudio(cleanText, onEnd);
+  }
 }

@@ -17,6 +17,7 @@ import {
   RefreshCw,
   Award,
   Zap,
+  Swords,
 } from 'lucide-react';
 
 interface PokemonBinderProps {
@@ -25,6 +26,8 @@ interface PokemonBinderProps {
   currentStreak: number;
   availablePacks: number;
   onOpenPack: () => void;
+  onOpenLeaderboard?: () => void;
+  onOpenBattle?: () => void;
 }
 
 export const PokemonBinder: React.FC<PokemonBinderProps> = ({
@@ -33,6 +36,8 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
   currentStreak = 0,
   availablePacks = 0,
   onOpenPack,
+  onOpenLeaderboard,
+  onOpenBattle,
 }) => {
   const [filterRarity, setFilterRarity] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'unlocked' | 'locked'>('all');
@@ -111,7 +116,7 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <span className="px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-1 shadow-md shadow-amber-400/30">
-                <Trophy className="w-3.5 h-3.5 fill-slate-950" /> 仔仔專屬成就獎勵
+                <Trophy className="w-3.5 h-3.5 fill-slate-950" /> 學員專屬成就獎勵
               </span>
               <span className="px-3 py-1 rounded-full bg-slate-800 text-amber-300 font-bold text-xs border border-slate-700">
                 正版寶可夢立繪卡牌
@@ -121,7 +126,7 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
               </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-100 to-amber-400">
-              🎒 Jovan 的寶可夢大師集卡冊
+              🎒 寶可夢大師集卡冊
             </h2>
             <p className="text-sm text-slate-300 mt-1 max-w-xl">
               特訓每連續答對 <strong>10 題</strong>，即可解鎖 1 次神秘卡包抽卡機會！越答得多，收集越多神獸與閃卡！
@@ -172,6 +177,30 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
                 </span>
               </div>
             )}
+
+            {/* Quick Action Buttons for Battle & Leaderboard */}
+            <div className="flex items-center gap-2 w-full justify-end">
+              {onOpenLeaderboard && (
+                <button
+                  type="button"
+                  onClick={onOpenLeaderboard}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-slate-700 flex items-center gap-1.5 transition-all shadow-md active:scale-95"
+                >
+                  <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                  <span>榮譽排行榜</span>
+                </button>
+              )}
+              {onOpenBattle && (
+                <button
+                  type="button"
+                  onClick={onOpenBattle}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black text-xs border border-red-500/50 flex items-center gap-1.5 transition-all shadow-md shadow-red-600/30 active:scale-95 animate-pulse"
+                >
+                  <Swords className="w-4 h-4" />
+                  <span>寶可夢對戰 ⚔️</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 {
-  "name": "廣東話小學入學模擬評估與詞語特訓",
-  "description": "廣東話中級班入學模擬測驗系統與詞語特訓 (口試與筆試互動評估、詞語聽選填空、重組句子及寶可夢卡包獎勵)",
+  "name": "粵語精靈學堂 (Cantonese Pocket Academy)",
+  "description": "粵語精靈學堂 (Cantonese Pocket Academy) - 小學廣東話詞語朗讀發音特訓、聽選填空、重組句子與寶可夢卡包收集獎勵",
   "requestFramePermissions": ["microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

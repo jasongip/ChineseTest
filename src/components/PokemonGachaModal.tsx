@@ -44,7 +44,7 @@ export const PokemonGachaModal: React.FC<PokemonGachaModalProps> = ({
       // Announce drawn pokemon in Cantonese
       setTimeout(() => {
         if (isNewCard) {
-          speakCantonese(`太犀利啦仔仔！你首次抽到全新神獸 ${drawnCard.nameZh}！`);
+          speakCantonese(`太犀利啦！你首次抽到全新神獸 ${drawnCard.nameZh}！`);
         } else {
           speakCantonese(`你再次抽到 ${drawnCard.nameZh}！目前一共擁有 ${cardCount} 張！`);
         }
@@ -82,7 +82,7 @@ export const PokemonGachaModal: React.FC<PokemonGachaModalProps> = ({
             ? isNewCard
               ? '🎉 哇！這是全新解鎖的稀有卡牌，已收錄進你的集卡冊！'
               : `🌟 再次抽到同一款卡牌！目前一共持有 x${cardCount} 張！`
-            : '仔仔表現超棒！快點擊撕開神秘卡包，看看抽到哪隻精靈！'}
+            : '你的表現超棒！快點擊撕開神秘卡包，看看抽到哪隻精靈！'}
         </p>
 
         {/* CENTER STAGE */}
@@ -162,7 +162,7 @@ export const PokemonGachaModal: React.FC<PokemonGachaModalProps> = ({
               }}
               className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm transition-all border border-slate-600 flex items-center justify-center gap-1.5"
             >
-              <Trophy className="w-4 h-4 text-amber-400" /> 前往 Jovan 卡冊查看全部
+              <Trophy className="w-4 h-4 text-amber-400" /> 前往卡冊查看全部
             </button>
             <button
               onClick={onClose}

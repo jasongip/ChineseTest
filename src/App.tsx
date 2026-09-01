@@ -272,7 +272,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>廣東話詞語特訓與入學評估系統 • 考生：Jovan Ng（伍博睿）</span>
+            <span>粵語精靈學堂 (Cantonese Pocket Academy) • 廣東話詞語特訓系統</span>
           </div>
           <div className="flex items-center gap-4 text-slate-400">
             <span>200+ 核心詞語 ｜ 寶可夢卡包集卡冊 ｜ 語音發音朗讀</span>

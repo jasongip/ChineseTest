@@ -15,8 +15,10 @@ import {
   ArrowLeft,
   ShieldCheck,
   Award,
+  Settings,
 } from 'lucide-react';
 import { speakCantonese, audioService } from '../utils/audio';
+import { VoiceSettingsModal } from './VoiceSettingsModal';
 
 interface NavbarProps {
   candidate: CandidateInfo;
@@ -48,6 +50,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLockAssessment,
 }) => {
   const [isNavCollapsed, setIsNavCollapsed] = useState<boolean>(false);
+  const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState<boolean>(false);
 
   const formatTime = (secs: number) => {
     const mins = Math.floor(secs / 60);
@@ -75,7 +78,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm print:hidden transition-all">
+    <>
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm print:hidden transition-all">
       {/* 1. COMPACT VIEW (COLLAPSED ON MOBILE/IPAD) */}
       {isNavCollapsed ? (
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2 flex items-center justify-between gap-2">
@@ -85,21 +89,31 @@ export const Navbar: React.FC<NavbarProps> = ({
               廣
             </div>
             <span className="font-extrabold text-xs sm:text-sm text-slate-800">
-              {isVocabMode ? '仔仔詞語特訓' : '入學評估系統'}
+              {isVocabMode ? '粵語精靈學堂' : '入學評估系統'}
             </span>
           </div>
 
           {/* Right Actions */}
           <div className="flex items-center gap-2">
-            {/* Cantonese Voice button */}
-            <button
-              type="button"
-              onClick={handleTestVoice}
-              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-blue-600 border border-slate-200 transition"
-              title="測試粵語發音"
-            >
-              <Volume2 className="w-4 h-4" />
-            </button>
+            {/* Cantonese Voice button & Engine Settings */}
+            <div className="flex items-center bg-[#F0F4F8] rounded-xl border border-gray-200 p-0.5">
+              <button
+                type="button"
+                onClick={handleTestVoice}
+                className="p-1.5 rounded-lg hover:bg-slate-200 text-blue-600 transition cursor-pointer"
+                title="測試粵語發音"
+              >
+                <Volume2 className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsVoiceSettingsOpen(true)}
+                className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-600 transition cursor-pointer"
+                title="語音引擎設定 (iOS/Safari/雲端粵語切換)"
+              >
+                <Settings className="w-3.5 h-3.5" />
+              </button>
+            </div>
 
             {!isVocabMode && (
               <div className="bg-[#FEF3C7] border border-[#FDE68A] px-2 py-0.5 rounded-lg text-xs font-bold text-[#92400E]">
@@ -141,11 +155,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-base sm:text-lg font-bold tracking-tight text-[#2D3748]">
-                    {isVocabMode ? '廣東話詞語特訓系統' : '廣東話中級班入學評估系統'}
+                    {isVocabMode ? '粵語精靈學堂' : '廣東話中級班入學評估系統'}
                   </h1>
                   {isVocabMode ? (
                     <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 text-amber-900 text-[10px] font-extrabold border border-amber-300">
-                      200+ 核心詞語 • 寶可夢卡包
+                      Cantonese Pocket Academy • 寶可夢卡包
                     </span>
                   ) : (
                     <span className="hidden md:inline-block px-2 py-0.5 rounded-full bg-[#EBF8FF] text-[#2B6CB0] text-[10px] font-bold uppercase tracking-wider border border-[#BEE3F8]">
@@ -155,7 +169,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
                 <p className="text-[11px] text-gray-500 font-semibold tracking-wide">
                   {isVocabMode
-                    ? '聽音選詞 • 缺字填空 • 中英對照 • 重組句子 • 連勝抽卡'
+                    ? '朗讀發音 • 聽音選詞 • 缺字填空 • 重組句子 • 抽卡收集'
                     : `60分鐘模擬評估 • 口試與筆試考核 • 考生：${candidate.nameEn}（${candidate.nameZh}）`}
                 </p>
               </div>
@@ -163,17 +177,29 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Right Control Actions */}
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-              {/* Cantonese voice test */}
-              <button
-                type="button"
-                id="test-cantonese-voice"
-                onClick={handleTestVoice}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F0F4F8] hover:bg-[#E2E8F0] text-[#2B6CB0] text-xs font-bold transition border border-gray-200 cursor-pointer"
-                title="測試粵語發音"
-              >
-                <Volume2 className="w-3.5 h-3.5 text-[#4299E1]" />
-                <span className="hidden sm:inline">語音測試</span>
-              </button>
+              {/* Cantonese voice test & Engine selector group */}
+              <div className="flex items-center rounded-xl bg-[#F0F4F8] border border-gray-200 p-0.5 shadow-xs">
+                <button
+                  type="button"
+                  id="test-cantonese-voice"
+                  onClick={handleTestVoice}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-[#E2E8F0] text-[#2B6CB0] text-xs font-bold transition cursor-pointer"
+                  title="測試粵語發音"
+                >
+                  <Volume2 className="w-3.5 h-3.5 text-[#4299E1]" />
+                  <span>語音測試</span>
+                </button>
+                <button
+                  type="button"
+                  id="voice-engine-settings-btn"
+                  onClick={() => setIsVoiceSettingsOpen(true)}
+                  className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-[#E2E8F0] text-slate-600 text-xs font-bold transition border-l border-gray-300 cursor-pointer"
+                  title="切換發音引擎（iOS/Safari/雲端香港粵語）"
+                >
+                  <Settings className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="hidden sm:inline">換引擎</span>
+                </button>
+              </div>
 
               {/* VOCAB PRACTICE MODE: Shows Lock Button to Enter Assessment */}
               {isVocabMode && (
@@ -350,5 +376,12 @@ export const Navbar: React.FC<NavbarProps> = ({
         </>
       )}
     </header>
-  );
+
+    {/* VOICE SETTINGS MODAL */}
+    <VoiceSettingsModal
+      isOpen={isVoiceSettingsOpen}
+      onClose={() => setIsVoiceSettingsOpen(false)}
+    />
+  </>
+);
 };

@@ -11,6 +11,17 @@ import { DictationCanvasPractice } from './DictationCanvasPractice';
 import { StrokeTracerPractice } from './StrokeTracerPractice';
 import { PronunciationPractice } from './PronunciationPractice';
 import { PasswordAuthModal } from './PasswordAuthModal';
+import { LeaderboardModal } from './LeaderboardModal';
+import { PokemonBattleArena } from './PokemonBattleArena';
+import { PlayerProfile, PlayerStats, LeaderboardUser } from '../types/battle';
+import {
+  getOrCreatePlayerProfile,
+  getPlayerStats,
+  updatePlayerStats,
+  savePlayerProfile,
+  NPC_RIVALS,
+} from '../utils/battleUtils';
+import { syncPlayerToFirestore } from '../lib/firebase';
 import { speakCantonese, audioService } from '../utils/audio';
 import {
   Volume2,
@@ -39,6 +50,7 @@ import {
   Edit3,
   Mic,
   Lock,
+  Swords,
 } from 'lucide-react';
 
 type PracticeMode =
@@ -152,23 +164,69 @@ export const VocabPracticePage: React.FC = () => {
         },
       };
     });
+
+    // Also update global player stats for leaderboard
+    setPlayerStatsState(
+      updatePlayerStats((prev) => ({
+        ...prev,
+        allTimeAnswered: prev.allTimeAnswered + 1,
+        allTimeCorrect: prev.allTimeCorrect + (isCorrect ? 1 : 0),
+        weeklyAnswered: prev.weeklyAnswered + 1,
+        weeklyCorrect: prev.weeklyCorrect + (isCorrect ? 1 : 0),
+      }))
+    );
   };
 
-  // Pokemon Rewards State
+  // Device-locked Random Player Profile & Global Stats
+  const [playerProfile, setPlayerProfile] = useState<PlayerProfile>(() => getOrCreatePlayerProfile());
+  const [playerStatsState, setPlayerStatsState] = useState<PlayerStats>(() => getPlayerStats());
+
+  // Leaderboard & Battle Arena Modal states
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState<boolean>(false);
+  const [isBattleArenaOpen, setIsBattleArenaOpen] = useState<boolean>(false);
+  const [selectedRival, setSelectedRival] = useState<LeaderboardUser | null>(null);
+
+  // Quick launch battle with rival
+  const handleStartBattleWithRival = (rival: LeaderboardUser) => {
+    setSelectedRival(rival);
+    setIsBattleArenaOpen(true);
+  };
+
+  const handleOpenGeneralBattle = () => {
+    // Default to first rival
+    setSelectedRival(NPC_RIVALS[0]);
+    setIsBattleArenaOpen(true);
+  };
+
+  // Callback when a card is unlocked or duplicated from battle
+  const handleRewardCardUnlocked = (cardId: number) => {
+    setCardInventory((prev) => {
+      const prevCount = prev[cardId] || 0;
+      return {
+        ...prev,
+        [cardId]: prevCount + 1,
+      };
+    });
+  };
+
+  // Pokemon Rewards State - Default to the 4 classic starter Pokemon (Pikachu, Charizard, Blastoise, Venusaur)
   const [cardInventory, setCardInventory] = useState<Record<number, number>>(() => {
+    const starterDeck: Record<number, number> = { 25: 1, 6: 1, 9: 1, 3: 1 };
     try {
       const savedInv = localStorage.getItem(STORAGE_KEY_INVENTORY);
       if (savedInv) {
         const parsedInv = JSON.parse(savedInv);
         if (parsedInv && typeof parsedInv === 'object' && Object.keys(parsedInv).length > 0) {
-          return parsedInv;
+          // Merge starter cards if player has fewer than 4 cards
+          const merged = { ...starterDeck, ...parsedInv };
+          return merged;
         }
       }
       const savedLegacy = localStorage.getItem(STORAGE_KEY_CARDS);
       if (savedLegacy) {
         const parsed = JSON.parse(savedLegacy);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const migrated: Record<number, number> = {};
+          const migrated: Record<number, number> = { ...starterDeck };
           parsed.forEach((id: number) => {
             migrated[id] = (migrated[id] || 0) + 1;
           });
@@ -176,7 +234,7 @@ export const VocabPracticePage: React.FC = () => {
         }
       }
     } catch {}
-    return { 25: 1 }; // Starter Pikachu
+    return starterDeck; // Starter 4 Pokemon: 25(Pikachu), 6(Charizard), 9(Blastoise), 3(Venusaur)
   });
 
   const unlockedCardIds = useMemo(() => {
@@ -205,6 +263,43 @@ export const VocabPracticePage: React.FC = () => {
       localStorage.setItem(STORAGE_KEY_PACKS, String(availablePacks));
     } catch {}
   }, [availablePacks]);
+
+  // Real-time Firestore sync whenever stats, card inventory, or profile change
+  useEffect(() => {
+    const uniqueCardsCount = Object.keys(cardInventory).filter(
+      (id) => (cardInventory[Number(id)] || 0) > 0
+    ).length;
+
+    const playerAccuracy =
+      playerStatsState.allTimeAnswered === 0
+        ? 100
+        : Math.min(
+            100,
+            Math.round(
+              (playerStatsState.allTimeCorrect / playerStatsState.allTimeAnswered) * 100
+            )
+          );
+
+    const playerDeckIds = unlockedCardIds.slice(0, 4);
+
+    const playerData: LeaderboardUser = {
+      id: playerProfile.id,
+      name: playerProfile.name,
+      avatarBg: 'from-amber-400 via-yellow-400 to-orange-500',
+      badge: '👑 本機學員',
+      allTimeAnswered: playerStatsState.allTimeAnswered,
+      allTimeCorrect: playerStatsState.allTimeCorrect,
+      accuracy: playerAccuracy,
+      cardsCount: uniqueCardsCount,
+      weeklyAnswered: playerStatsState.weeklyAnswered,
+      weeklyCorrect: playerStatsState.weeklyCorrect,
+      battleWins: playerStatsState.battleWins,
+      battleScore: playerStatsState.battleScore,
+      deckCardIds: playerDeckIds.length >= 4 ? playerDeckIds : [25, 6, 9, 3],
+    };
+
+    syncPlayerToFirestore(playerData);
+  }, [playerProfile, playerStatsState, cardInventory, unlockedCardIds]);
 
   const [gachaModalOpen, setGachaModalOpen] = useState<boolean>(false);
   const [drawnCard, setDrawnCard] = useState<PokemonCardData | null>(null);
@@ -620,7 +715,19 @@ export const VocabPracticePage: React.FC = () => {
 
         {/* Global Quick Info & Collection Stats */}
         <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 text-xs">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Player Identity Tag */}
+            <button
+              type="button"
+              onClick={() => setIsLeaderboardOpen(true)}
+              className="flex items-center gap-1.5 bg-gradient-to-r from-amber-100 to-yellow-100 hover:from-amber-200 hover:to-yellow-200 px-2.5 py-1 rounded-xl border border-amber-300 text-amber-950 font-bold transition-all shadow-xs cursor-pointer"
+              title="點擊查看榮譽排行榜"
+            >
+              <span>🎒</span>
+              <span>代號：<strong className="text-amber-900 font-extrabold">{playerProfile.name}</strong></span>
+              <span className="text-[10px] bg-amber-400/50 text-amber-950 px-1 rounded font-black">榜</span>
+            </button>
+
             <div className="flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200 text-amber-900 font-bold">
               <Flame className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
               <span>當前連對：<strong className="text-sm font-mono">{streak}</strong></span>
@@ -638,14 +745,33 @@ export const VocabPracticePage: React.FC = () => {
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={scrollToBinder}
-            className="px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border border-slate-200 flex items-center gap-1.5 cursor-pointer"
-          >
-            <Trophy className="w-3.5 h-3.5 text-amber-600" />
-            <span>寶可夢卡冊 ({unlockedCardIds.length}/{POKEMON_CARDS_DATA.length})</span>
-          </button>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setIsLeaderboardOpen(true)}
+              className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border border-slate-200 flex items-center gap-1 cursor-pointer transition-all active:scale-95"
+            >
+              <Trophy className="w-3.5 h-3.5 text-amber-600" />
+              <span>排行榜</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleOpenGeneralBattle}
+              className="px-3 py-1 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black flex items-center gap-1 shadow-xs shadow-red-500/20 cursor-pointer transition-all active:scale-95 animate-pulse"
+            >
+              <Swords className="w-3.5 h-3.5" />
+              <span>寶可夢對戰 ⚔️</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={scrollToBinder}
+              className="px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border border-slate-200 flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>🎒 卡冊 ({unlockedCardIds.length}/{POKEMON_CARDS_DATA.length})</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -879,7 +1005,7 @@ export const VocabPracticePage: React.FC = () => {
               太棒了！完成本輪挑戰 🎉
             </h3>
             <p className="text-slate-500 text-xs sm:text-sm">
-              Jovan 在本輪題目中，答對了：
+              你在本輪題目中，答對了：
             </p>
           </div>
 
@@ -1271,6 +1397,31 @@ export const VocabPracticePage: React.FC = () => {
         currentStreak={streak}
         availablePacks={availablePacks}
         onOpenPack={handleManualOpenPack}
+        onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+        onOpenBattle={handleOpenGeneralBattle}
+      />
+
+      {/* LEADERBOARD MODAL */}
+      <LeaderboardModal
+        isOpen={isLeaderboardOpen}
+        onClose={() => setIsLeaderboardOpen(false)}
+        playerProfile={playerProfile}
+        playerStats={playerStatsState}
+        cardInventory={cardInventory}
+        onUpdateProfile={(newProfile) => setPlayerProfile(newProfile)}
+        onStartBattleWithRival={handleStartBattleWithRival}
+        npcRivals={NPC_RIVALS}
+      />
+
+      {/* POKEMON BATTLE ARENA MODAL */}
+      <PokemonBattleArena
+        isOpen={isBattleArenaOpen}
+        onClose={() => setIsBattleArenaOpen(false)}
+        rival={selectedRival}
+        playerProfile={playerProfile}
+        cardInventory={cardInventory}
+        onRewardCardUnlocked={handleRewardCardUnlocked}
+        onStatsUpdated={() => setPlayerStatsState(getPlayerStats())}
       />
 
       {/* GACHA REVEAL MODAL */}
