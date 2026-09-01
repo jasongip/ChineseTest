@@ -241,7 +241,7 @@ export const ReadingComprehensionPractice: React.FC<ReadingComprehensionPractice
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-lg bg-purple-100 text-purple-800 text-xs font-bold">
-              {currentQ.categoryName} • {currentQ.title}
+              {currentQ?.categoryName || '閱讀理解'} • {currentQ?.title || '短文'}
             </span>
             <div className="flex items-center gap-1">
               <span className="text-xs font-bold text-slate-500">進度</span>

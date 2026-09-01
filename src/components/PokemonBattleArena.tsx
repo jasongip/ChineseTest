@@ -314,12 +314,15 @@ export const PokemonBattleArena: React.FC<PokemonBattleArenaProps> = ({
     }
     setBattleLog(logMsg);
 
-    // Trigger Elemental VFX & Haptic / Screen Shake
+    // Trigger Elemental VFX, SFX & Haptic / Screen Shake
     const pType = activePlayerFighter.card.type || '普通';
     setAttackEffect({ type: pType, target: 'enemy' });
     setIsEnemyHit(true);
     setIsScreenShaking(true);
     
+    // Play retro Pokemon attack sound effect
+    audioService.playPokemonAttack(pType, chosenMove.requiredQuestions >= 2);
+
     // Haptic vibration if supported (Mobile/iPad)
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       navigator.vibrate([80, 50, 100]);
@@ -339,7 +342,8 @@ export const PokemonBattleArena: React.FC<PokemonBattleArenaProps> = ({
       setEnemyTeam(updatedEnemyTeam);
 
       if (newEnemyHp <= 0) {
-        // Enemy card knocked out!
+        // Enemy card knocked out -> Play Pokemon Faint SFX!
+        audioService.playPokemonFaint();
         speakCantonese(`太勁喇！對手隻 ${activeEnemyFighter.card.nameZh} 頂唔住倒低咗！`);
         if (enemyActiveIdx + 1 < enemyTeam.length) {
           // Next enemy card comes in
@@ -385,11 +389,13 @@ export const PokemonBattleArena: React.FC<PokemonBattleArenaProps> = ({
         enemyDmg = Math.max(15, Math.round(dmgVal * typeEff.multiplier));
         setBattleLog(`💥 對手 ${eFighter.card.nameZh} 使用了【${move.nameZh}】，命中造成 ${enemyDmg} 傷害！`);
         
-        // Trigger Enemy attack VFX & Screen Shake
+        // Trigger Enemy attack VFX, SFX & Screen Shake
         const eType = eFighter.card.type || '普通';
         setAttackEffect({ type: eType, target: 'player' });
         setIsPlayerHit(true);
         setIsScreenShaking(true);
+        audioService.playPokemonAttack(eType, false);
+
         if (typeof navigator !== 'undefined' && navigator.vibrate) {
           navigator.vibrate(120);
         }
@@ -410,7 +416,8 @@ export const PokemonBattleArena: React.FC<PokemonBattleArenaProps> = ({
         setPlayerTeam(updatedPlayerTeam);
 
         if (newPlayerHp <= 0) {
-          // Player card knocked out - Natural Cantonese prompt
+          // Player card knocked out -> Play Pokemon Faint SFX!
+          audioService.playPokemonFaint();
           speakCantonese(`哎呀！你隻 ${pFighter.card.nameZh} 頂唔住暈咗喇！快啲派出下一隻啦！`);
           if (playerActiveIdx + 1 < playerTeam.length) {
             const nextPIdx = playerActiveIdx + 1;
@@ -437,8 +444,10 @@ export const PokemonBattleArena: React.FC<PokemonBattleArenaProps> = ({
   // Victory Handler
   const handleBattleVictory = () => {
     setPhase('battle_win');
-    audioService.playFanfare();
-    speakCantonese(`恭喜你贏咗呢場對戰！快啲揀一張對手嘅卡牌複製入你嘅卡冊啦！`);
+    audioService.playPokemonVictoryFanfare();
+    setTimeout(() => {
+      speakCantonese(`恭喜你贏咗呢場對戰！快啲揀一張對手嘅卡牌複製入你嘅卡冊啦！`);
+    }, 900);
 
     // Update Player Battle Stats
     updatePlayerStats((prev) => ({

@@ -149,29 +149,185 @@ class AudioManager {
     }
   }
 
-  playFanfare() {
+  // Classic Pokemon-style Attack Sound Effect (Tackle / Slash / Zap / Elemental Hit)
+  playPokemonAttack(type: string = '普通', isStrong: boolean = false) {
     try {
       this.initCtx();
       if (!this.ctx) return;
-      const notes = [523.25, 523.25, 523.25, 659.25, 783.99, 1046.5]; // C5 C5 C5 E5 G5 C6 (Victory Fanfare)
-      const times = [0, 0.12, 0.24, 0.36, 0.48, 0.65];
-      const durations = [0.1, 0.1, 0.1, 0.1, 0.15, 0.8];
       const now = this.ctx.currentTime;
-      notes.forEach((freq, i) => {
-        const osc = this.ctx!.createOscillator();
-        const gain = this.ctx!.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, now + times[i]);
-        gain.gain.setValueAtTime(0.18, now + times[i]);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + times[i] + durations[i]);
-        osc.connect(gain);
-        gain.connect(this.ctx!.destination);
-        osc.start(now + times[i]);
-        osc.stop(now + times[i] + durations[i]);
+
+      // 1. Noise burst for physical impact crunch (tackle / hit sound)
+      const bufferSize = this.ctx.sampleRate * 0.12;
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const output = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
+      }
+
+      const whiteNoise = this.ctx.createBufferSource();
+      whiteNoise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = type === '電' ? 'highpass' : type === '火' ? 'bandpass' : 'lowpass';
+      filter.frequency.setValueAtTime(type === '電' ? 1800 : 800, now);
+      filter.frequency.exponentialRampToValueAtTime(150, now + 0.12);
+
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(isStrong ? 0.22 : 0.15, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+      whiteNoise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(this.ctx.destination);
+      whiteNoise.start(now);
+
+      // 2. Chiptune Retro Square/Saw wave pitch drop & punch
+      const osc = this.ctx.createOscillator();
+      const oscGain = this.ctx.createGain();
+      osc.type = type === '電' ? 'sawtooth' : 'square';
+
+      const startFreq = type === '電' ? 950 : type === '超能力' ? 1200 : 550;
+      const endFreq = 70;
+
+      osc.frequency.setValueAtTime(startFreq, now);
+      // Rapid stepped frequency drop mimicking GameBoy sound chip
+      osc.frequency.exponentialRampToValueAtTime(startFreq * 0.6, now + 0.03);
+      osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.15);
+
+      oscGain.gain.setValueAtTime(isStrong ? 0.18 : 0.12, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+      osc.connect(oscGain);
+      oscGain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.15);
+
+      // 3. Extra second hit layer for strong / ultimate attacks
+      if (isStrong) {
+        const osc2 = this.ctx.createOscillator();
+        const gain2 = this.ctx.createGain();
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(320, now + 0.05);
+        osc2.frequency.exponentialRampToValueAtTime(45, now + 0.2);
+        gain2.gain.setValueAtTime(0.2, now + 0.05);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        osc2.connect(gain2);
+        gain2.connect(this.ctx.destination);
+        osc2.start(now + 0.05);
+        osc2.stop(now + 0.2);
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
+  // Classic Pokemon Faint Sound Effect (Descending stepped slide + collapse thud)
+  playPokemonFaint() {
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+
+      // Descending stepped glissando (classic Game Boy faint)
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+
+      const steps = [440, 392, 349, 311, 277, 246, 220, 196, 164, 130, 98, 65];
+      const stepDuration = 0.045; // ~0.55s total
+
+      steps.forEach((freq, idx) => {
+        osc.frequency.setValueAtTime(freq, now + idx * stepDuration);
+      });
+
+      gain.gain.setValueAtTime(0.16, now);
+      gain.gain.setValueAtTime(0.14, now + 0.35);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + steps.length * stepDuration);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + steps.length * stepDuration);
+
+      // Low impact thud when Pokemon collapses
+      const thudOsc = this.ctx.createOscillator();
+      const thudGain = this.ctx.createGain();
+      const thudTime = now + (steps.length - 2) * stepDuration;
+      thudOsc.type = 'triangle';
+      thudOsc.frequency.setValueAtTime(110, thudTime);
+      thudOsc.frequency.exponentialRampToValueAtTime(35, thudTime + 0.25);
+
+      thudGain.gain.setValueAtTime(0.2, thudTime);
+      thudGain.gain.exponentialRampToValueAtTime(0.001, thudTime + 0.25);
+
+      thudOsc.connect(thudGain);
+      thudGain.connect(this.ctx.destination);
+      thudOsc.start(thudTime);
+      thudOsc.stop(thudTime + 0.25);
+    } catch {
+      // Ignore
+    }
+  }
+
+  // Classic Pokemon Victory Fanfare (Iconic 5-7 note triumphant theme)
+  playPokemonVictoryFanfare() {
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+
+      // Iconic victory melody: G4 -> C5 -> E5 -> G5 -> E5 -> G5 -> C6 (long hold)
+      // Notes with timing & duration
+      const fanfareNotes = [
+        { freq: 392.0, time: 0.00, dur: 0.12 },  // G4
+        { freq: 523.25, time: 0.13, dur: 0.12 }, // C5
+        { freq: 659.25, time: 0.26, dur: 0.12 }, // E5
+        { freq: 783.99, time: 0.39, dur: 0.18 }, // G5
+        { freq: 659.25, time: 0.58, dur: 0.12 }, // E5
+        { freq: 783.99, time: 0.71, dur: 0.18 }, // G5
+        { freq: 1046.5, time: 0.90, dur: 0.90 }, // C6 (Triumphant sustained finish)
+      ];
+
+      fanfareNotes.forEach(({ freq, time, dur }) => {
+        // Lead melody (Crisp Square / Triangle Chiptune)
+        const leadOsc = this.ctx!.createOscillator();
+        const leadGain = this.ctx!.createGain();
+        leadOsc.type = 'triangle';
+        leadOsc.frequency.setValueAtTime(freq, now + time);
+
+        leadGain.gain.setValueAtTime(0.18, now + time);
+        leadGain.gain.setValueAtTime(0.16, now + time + dur * 0.7);
+        leadGain.gain.exponentialRampToValueAtTime(0.001, now + time + dur);
+
+        leadOsc.connect(leadGain);
+        leadGain.connect(this.ctx!.destination);
+
+        leadOsc.start(now + time);
+        leadOsc.stop(now + time + dur);
+
+        // Harmony / Bass accompaniment
+        const bassOsc = this.ctx!.createOscillator();
+        const bassGain = this.ctx!.createGain();
+        bassOsc.type = 'sine';
+        bassOsc.frequency.setValueAtTime(freq / 2, now + time);
+
+        bassGain.gain.setValueAtTime(0.12, now + time);
+        bassGain.gain.exponentialRampToValueAtTime(0.001, now + time + dur);
+
+        bassOsc.connect(bassGain);
+        bassGain.connect(this.ctx!.destination);
+
+        bassOsc.start(now + time);
+        bassOsc.stop(now + time + dur);
       });
     } catch {
       // Ignore
     }
+  }
+
+  playFanfare() {
+    this.playPokemonVictoryFanfare();
   }
 
   playCardOpen() {

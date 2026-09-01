@@ -364,38 +364,47 @@ export function generateRandomBattleQuestion(): BattleQuestion {
   const pickedType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
 
   // 1. 重組句子 (scramble)
-  if (pickedType === 'scramble') {
+  if (pickedType === 'scramble' && Array.isArray(SCRAMBLE_SENTENCES_DATA) && SCRAMBLE_SENTENCES_DATA.length > 0) {
     const item = SCRAMBLE_SENTENCES_DATA[Math.floor(Math.random() * SCRAMBLE_SENTENCES_DATA.length)];
-    return {
-      id: 'bq_' + Math.random().toString(36).substring(2, 8),
-      type: 'scramble',
-      prompt: '重組句子：請按正確廣東話語序排好句子：',
-      subPrompt: item.english || item.hint,
-      correctAnswer: item.targetSentence,
-      scrambleWords: [...item.segments].sort(() => Math.random() - 0.5),
-      explanation: item.targetSentence,
-    };
+    if (item && item.segments && item.targetSentence) {
+      return {
+        id: 'bq_' + Math.random().toString(36).substring(2, 8),
+        type: 'scramble',
+        prompt: '重組句子：請按正確廣東話語序排好句子：',
+        subPrompt: item.english || item.hint || '請重組句子',
+        correctAnswer: item.targetSentence,
+        scrambleWords: [...item.segments].sort(() => Math.random() - 0.5),
+        explanation: item.targetSentence,
+      };
+    }
   }
 
   // 2. 短文理解 (comprehension)
-  if (pickedType === 'comprehension') {
+  if (pickedType === 'comprehension' && Array.isArray(READING_STORY_LIST) && READING_STORY_LIST.length > 0) {
     const story = READING_STORY_LIST[Math.floor(Math.random() * READING_STORY_LIST.length)];
-    return {
-      id: 'bq_' + Math.random().toString(36).substring(2, 8),
-      type: 'comprehension',
-      prompt: `短文理解：《${story.title}》`,
-      subPrompt: `${story.passage}\n\n👉 問題：${story.question}`,
-      targetWord: story.passage,
-      questionText: story.question,
-      options: [...story.options],
-      correctAnswer: story.options[story.correctIndex],
-      explanation: `${story.question} -> 正確答案：${story.options[story.correctIndex]} (${story.explanation})`,
-    };
+    if (story && story.title && story.passage && story.question && Array.isArray(story.options) && story.options.length > 0) {
+      const correctOpt = story.options[story.correctIndex] || story.options[0];
+      return {
+        id: 'bq_' + Math.random().toString(36).substring(2, 8),
+        type: 'comprehension',
+        prompt: `短文理解：《${story.title}》`,
+        subPrompt: `${story.passage}\n\n👉 問題：${story.question}`,
+        targetWord: story.passage,
+        questionText: story.question,
+        options: [...story.options],
+        correctAnswer: correctOpt,
+        explanation: `${story.question} -> 正確答案：${correctOpt} (${story.explanation || ''})`,
+      };
+    }
   }
 
   // Vocab based questions
-  const randomVocab = VOCAB_PRACTICE_LIST[Math.floor(Math.random() * VOCAB_PRACTICE_LIST.length)];
-  const distractors = VOCAB_PRACTICE_LIST
+  const safeVocabList = Array.isArray(VOCAB_PRACTICE_LIST) && VOCAB_PRACTICE_LIST.length > 0
+    ? VOCAB_PRACTICE_LIST
+    : [{ id: 1, word: '開心', jyutping: 'hoi1 sam1', english: 'Happy', chars: ['開', '心'], exampleSentence: '今天我很開心。' }];
+
+  const randomVocab = safeVocabList[Math.floor(Math.random() * safeVocabList.length)];
+  const distractors = safeVocabList
     .filter((v) => v.id !== randomVocab.id)
     .sort(() => Math.random() - 0.5)
     .slice(0, 3);
