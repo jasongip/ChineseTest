@@ -170,17 +170,33 @@ export const PokemonBattleArena: React.FC<PokemonBattleArenaProps> = ({
   const availableMoves: MoveOption[] = useMemo(() => {
     if (!activePlayerFighter) return [];
     const card = activePlayerFighter.card;
-    const m1 = card.moves[0] || { nameZh: '普通打擊', damage: 40 };
-    const m2 = card.moves[1] || { nameZh: '必殺特攻', damage: 90 };
+    const rawMoves = card.moves || [];
     
-    // Parse numeric damage from card definition
-    const rawDmg1 = typeof m1.damage === 'number' ? m1.damage : parseInt(m1.damage) || 40;
-    const rawDmg2 = typeof m2.damage === 'number' ? m2.damage : parseInt(m2.damage) || 90;
+    // Sort moves by damage so:
+    // Move 1 = Fast attack (lower damage move on card)
+    // Move 2 = Strong special attack (higher damage move on card)
+    const validMoves = rawMoves.map((m) => {
+      const dmg = typeof m.damage === 'number' ? m.damage : parseInt(m.damage as string) || 40;
+      return { nameZh: m.nameZh, numDamage: dmg };
+    });
 
-    // Ensure Move 1 is quick (e.g. 40-70), Move 2 is big move (e.g. 90-140), Move 3 is ultimate
-    const dmg1 = Math.max(35, rawDmg1);
-    const dmg2 = Math.max(dmg1 + 35, rawDmg2);
-    const dmg3 = Math.max(dmg2 + 40, Math.round(card.hp * 0.85));
+    if (validMoves.length === 0) {
+      validMoves.push({ nameZh: '衝擊', numDamage: 35 });
+    }
+
+    // Sort ascending by numerical damage
+    validMoves.sort((a, b) => a.numDamage - b.numDamage);
+
+    const m1 = validMoves[0];
+    const m2 =
+      validMoves.length > 1
+        ? validMoves[1]
+        : { nameZh: `${card.nameZh}特攻`, numDamage: Math.round(m1.numDamage * 1.5) };
+
+    const dmg1 = m1.numDamage;
+    const dmg2 = m2.numDamage;
+    // Ultimate Move is a bonus devastating 3-question finisher
+    const dmg3 = Math.max(dmg2 + 35, Math.round(card.hp * 0.95));
 
     return [
       {
