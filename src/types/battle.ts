@@ -34,6 +34,8 @@ export interface LeaderboardUser {
   battleWins: number;
   battleScore: number;
   deckCardIds: number[]; // 4 cards for battle
+  isCustomDeck?: boolean;
+  unlockedCardIds?: number[];
   lastUpdated?: number;
 }
 

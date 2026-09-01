@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { PlayerProfile, PlayerStats, LeaderboardUser } from '../types/battle';
 import { POKEMON_CARDS_DATA, PokemonCardData } from '../data/pokemonCards';
-import { generateRandomName, savePlayerProfile } from '../utils/battleUtils';
+import { generateRandomName, savePlayerProfile, getPlayerBattleDeck } from '../utils/battleUtils';
 import { subscribeToCloudPlayers, syncPlayerToFirestore } from '../lib/firebase';
+import { BattleDeckModal } from './BattleDeckModal';
 import {
   Trophy,
   Swords,
@@ -21,6 +22,8 @@ import {
   Crown,
   Cloud,
   Radio,
+  Layers,
+  Edit,
 } from 'lucide-react';
 
 interface LeaderboardModalProps {
@@ -49,6 +52,15 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
   const [tab, setTab] = useState<TabMode>('all_time');
   const [cloudPlayers, setCloudPlayers] = useState<LeaderboardUser[]>([]);
   const [isCloudSynced, setIsCloudSynced] = useState<boolean>(false);
+  const [isDeckModalOpen, setIsDeckModalOpen] = useState<boolean>(false);
+  const [activeDeck, setActiveDeck] = useState<number[]>(() => {
+    return getPlayerBattleDeck(cardInventory).deckCardIds;
+  });
+
+  // Keep deck state fresh
+  useEffect(() => {
+    setActiveDeck(getPlayerBattleDeck(cardInventory).deckCardIds);
+  }, [cardInventory, isDeckModalOpen]);
 
   // Real-time Firestore sync
   useEffect(() => {
@@ -80,12 +92,15 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
     return Math.min(100, Math.round((playerStats.allTimeCorrect / playerStats.allTimeAnswered) * 100));
   }, [playerStats]);
 
-  // Player's 4 battle cards
-  const playerDeckIds = useMemo(() => {
-    const unlocked = Object.keys(cardInventory)
+  // Player's 4 battle cards (from custom deck or fallback randomized owned cards)
+  const playerDeckInfo = useMemo(() => {
+    return getPlayerBattleDeck(cardInventory);
+  }, [cardInventory, activeDeck]);
+
+  const unlockedCardIdsList = useMemo(() => {
+    return Object.keys(cardInventory)
       .map(Number)
       .filter((id) => (cardInventory[id] || 0) > 0);
-    return unlocked.length >= 4 ? unlocked.slice(0, 4) : [25, 6, 9, 3];
   }, [cardInventory]);
 
   // Player as a LeaderboardUser
@@ -104,9 +119,11 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
       weeklyCorrect: playerStats.weeklyCorrect,
       battleWins: playerStats.battleWins,
       battleScore: playerStats.battleScore,
-      deckCardIds: playerDeckIds,
+      deckCardIds: playerDeckInfo.deckCardIds,
+      isCustomDeck: playerDeckInfo.isCustom,
+      unlockedCardIds: unlockedCardIdsList,
     };
-  }, [playerProfile, playerStats, playerAccuracy, playerUniqueCards, playerDeckIds]);
+  }, [playerProfile, playerStats, playerAccuracy, playerUniqueCards, playerDeckInfo, unlockedCardIdsList]);
 
   // Sync current player to Firestore on open or stats change
   useEffect(() => {
@@ -211,7 +228,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
         {/* PLAYER IDENTITY BAR */}
         <div className="bg-slate-800/90 border-b border-slate-700/80 p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 to-yellow-200 flex items-center justify-center text-xl font-black text-slate-900 shadow-md">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 to-yellow-200 flex items-center justify-center text-xl font-black text-slate-900 shadow-md shrink-0">
               🎒
             </div>
             <div>
@@ -221,7 +238,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                   {playerProfile.name}
                 </span>
                 <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[10px] font-bold border border-amber-400/30">
-                  鎖定代號
+                  {playerDeckInfo.isCustom ? '已自訂卡組' : '隨機卡組'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-400">
@@ -232,17 +249,27 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
             </div>
           </div>
 
-          {/* REROLL NAME BUTTON */}
-          {playerProfile.rerollsRemaining > 0 && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={handleRerollName}
-              className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-amber-300 font-bold text-xs flex items-center gap-1.5 transition-all border border-slate-600 shadow-sm"
-              title="重新擲出隨機組合代號"
+              onClick={() => setIsDeckModalOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 font-bold text-xs border border-amber-500/50 flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
-              🎲 換個代號 (剩 {playerProfile.rerollsRemaining} 次)
+              <Layers className="w-3.5 h-3.5 text-amber-400" />
+              <span>配置出戰卡組 ⚔️</span>
             </button>
-          )}
+
+            {/* REROLL NAME BUTTON */}
+            {playerProfile.rerollsRemaining > 0 && (
+              <button
+                onClick={handleRerollName}
+                className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-amber-300 font-bold text-xs flex items-center gap-1.5 transition-all border border-slate-600 shadow-sm cursor-pointer"
+                title="重新擲出隨機組合代號"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                🎲 換代號 (剩 {playerProfile.rerollsRemaining} 次)
+              </button>
+            )}
+          </div>
         </div>
 
         {/* TABS HEADER */}
@@ -353,7 +380,12 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                         <>
                           <span>天梯積分：<strong className="text-amber-400 font-bold">{user.battleScore}</strong> 分</span>
                           <span>勝場：<strong className="text-emerald-400 font-bold">{user.battleWins}</strong> 勝</span>
-                          <span>陣容：<strong className="text-sky-300 font-bold">4 隻神獸出戰</strong></span>
+                          <span className="flex items-center gap-1">
+                            <span>陣容：</span>
+                            <span className="text-amber-300 font-mono text-[11px] font-bold">
+                              {user.isCustomDeck ? '自訂4隻' : '隨機陣容'}
+                            </span>
+                          </span>
                         </>
                       )}
                     </div>
@@ -368,7 +400,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                         onClose();
                         onStartBattleWithRival(user);
                       }}
-                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black text-xs sm:text-sm shadow-md shadow-red-600/30 transition-all flex items-center gap-1.5 active:scale-95"
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black text-xs sm:text-sm shadow-md shadow-red-600/30 transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
                     >
                       <Swords className="w-4 h-4" /> 挑戰對戰
                     </button>
@@ -388,6 +420,16 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
           💡 <strong className="text-amber-300">對戰秘訣：</strong>每贏一場對戰，勝方可自由從對手隊伍複製一張神獸卡牌！輸方卡牌絕不損失！
         </div>
       </div>
+
+      {/* BATTLE DECK CUSTOMIZER MODAL */}
+      <BattleDeckModal
+        isOpen={isDeckModalOpen}
+        onClose={() => setIsDeckModalOpen(false)}
+        cardInventory={cardInventory}
+        onDeckSaved={(newDeck) => {
+          setActiveDeck(newDeck);
+        }}
+      />
     </div>
   );
 };

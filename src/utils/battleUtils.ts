@@ -30,6 +30,51 @@ export function generateRandomName(): string {
 
 const STORAGE_PROFILE_KEY = 'cantonese_academy_player_profile_v1';
 const STORAGE_STATS_KEY = 'cantonese_academy_player_stats_v1';
+const STORAGE_DECK_KEY = 'cantonese_academy_battle_deck_v1';
+
+export function getPlayerBattleDeck(cardInventory?: Record<number, number>): {
+  deckCardIds: number[];
+  isCustom: boolean;
+} {
+  // 1. Check if user explicitly configured and saved a custom deck
+  try {
+    const saved = localStorage.getItem(STORAGE_DECK_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length >= 4) {
+        const validIds = parsed
+          .map(Number)
+          .filter((id) => POKEMON_CARDS_DATA.some((c) => c.id === id));
+        if (validIds.length >= 4) {
+          return { deckCardIds: validIds.slice(0, 4), isCustom: true };
+        }
+      }
+    }
+  } catch {}
+
+  // 2. Anti-foolproof Fallback (方向 1): Randomly pick 4 cards from player's unlocked collection
+  const unlockedIds = Object.keys(cardInventory || {})
+    .map(Number)
+    .filter((id) => (cardInventory?.[id] || 0) > 0 && POKEMON_CARDS_DATA.some((c) => c.id === id));
+
+  if (unlockedIds.length >= 4) {
+    // Shuffle and pick 4 random unique cards from owned inventory
+    const shuffled = [...unlockedIds].sort(() => Math.random() - 0.5);
+    return { deckCardIds: shuffled.slice(0, 4), isCustom: false };
+  }
+
+  // 3. Fallback for new players with < 4 unlocked cards: combine owned cards with default starters
+  const starters = [25, 6, 9, 3];
+  const combined = Array.from(new Set([...unlockedIds, ...starters]));
+  return { deckCardIds: combined.slice(0, 4), isCustom: false };
+}
+
+export function savePlayerBattleDeck(deckIds: number[]): void {
+  try {
+    const cleanIds = deckIds.slice(0, 4).map(Number);
+    localStorage.setItem(STORAGE_DECK_KEY, JSON.stringify(cleanIds));
+  } catch {}
+}
 
 export function getOrCreatePlayerProfile(): PlayerProfile {
   try {
@@ -178,11 +223,26 @@ export const NPC_RIVALS: LeaderboardUser[] = [
 
 // Helper: Ensure opponent has exactly 4 valid Pokemon cards
 // If not enough attribute cards, dynamically fill with same-attribute or random R / SR cards
-export function resolveOpponentDeck(deckCardIds?: number[], fallbackType?: string): PokemonCardData[] {
+export function resolveOpponentDeck(
+  deckCardIds?: number[],
+  fallbackType?: string,
+  unlockedCardPool?: number[]
+): PokemonCardData[] {
   const result: PokemonCardData[] = [];
   const existingIds = new Set<number>();
 
-  if (deckCardIds && deckCardIds.length > 0) {
+  // If opponent has an unlocked card pool and no custom deck was fixed, pick 4 randomly from their pool
+  if (unlockedCardPool && unlockedCardPool.length >= 4 && (!deckCardIds || deckCardIds.length === 0)) {
+    const shuffled = [...unlockedCardPool].sort(() => Math.random() - 0.5);
+    for (const id of shuffled) {
+      const card = POKEMON_CARDS_DATA.find((c) => c.id === id);
+      if (card && !existingIds.has(card.id)) {
+        result.push(card);
+        existingIds.add(card.id);
+        if (result.length >= 4) break;
+      }
+    }
+  } else if (deckCardIds && deckCardIds.length > 0) {
     for (const id of deckCardIds) {
       const card = POKEMON_CARDS_DATA.find((c) => c.id === id);
       if (card && !existingIds.has(card.id)) {
@@ -391,17 +451,18 @@ export function generateRandomBattleQuestion(): BattleQuestion {
     };
   }
 
-  // 6. 朗讀特訓 (read_aloud)
+  // 6. 句意填空 (read_aloud / sentence_fill)
+  const maskedSentence = randomVocab.exampleSentence.replace(randomVocab.word, '【 ___ 】');
   const options = [randomVocab.word, ...distractors.map((d) => d.word)].sort(() => Math.random() - 0.5);
   return {
     id: 'bq_' + Math.random().toString(36).substring(2, 8),
     type: 'read_aloud',
-    prompt: `朗讀特訓：請朗讀詞語【 ${randomVocab.word} 】，並選出其在例句中的正確填空：`,
-    subPrompt: `例句：${randomVocab.exampleSentence.replace(randomVocab.word, '【 ___ 】')} ｜ 點擊播放示範發音 🔊`,
+    prompt: '句意填空：請閱讀例句，選出最適合填入空格中的詞語：',
+    subPrompt: `例句：${maskedSentence}\n\n（提示：英文為 ${randomVocab.english}）`,
     targetWord: randomVocab.word,
     jyutping: randomVocab.jyutping,
     options,
     correctAnswer: randomVocab.word,
-    explanation: `朗讀詞語：${randomVocab.word} (${randomVocab.jyutping})。例句：${randomVocab.exampleSentence}`,
+    explanation: `正確答案：【 ${randomVocab.word} 】 (${randomVocab.jyutping})。完整例句：${randomVocab.exampleSentence}`,
   };
 }

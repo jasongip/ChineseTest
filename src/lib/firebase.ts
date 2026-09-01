@@ -70,6 +70,8 @@ export async function syncPlayerToFirestore(player: LeaderboardUser): Promise<bo
       deckCardIds: Array.isArray(player.deckCardIds) && player.deckCardIds.length > 0
         ? player.deckCardIds.slice(0, 4)
         : [25, 6, 9, 3],
+      isCustomDeck: Boolean(player.isCustomDeck),
+      unlockedCardIds: Array.isArray(player.unlockedCardIds) ? player.unlockedCardIds : [],
       lastUpdated: Date.now(),
     };
 
@@ -117,6 +119,8 @@ export function subscribeToCloudPlayers(
               battleWins: Number(d.battleWins) || 0,
               battleScore: Number(d.battleScore) || 1000,
               deckCardIds: Array.isArray(d.deckCardIds) && d.deckCardIds.length > 0 ? d.deckCardIds : [25, 6, 9, 3],
+              isCustomDeck: Boolean(d.isCustomDeck),
+              unlockedCardIds: Array.isArray(d.unlockedCardIds) ? d.unlockedCardIds : [],
               lastUpdated: d.lastUpdated || Date.now(),
             });
           }

@@ -1,6 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { POKEMON_CARDS_DATA, PokemonCardData, CardRarity } from '../data/pokemonCards';
 import { PokemonCard } from './PokemonCard';
+import { BattleDeckModal } from './BattleDeckModal';
+import { getPlayerBattleDeck } from '../utils/battleUtils';
 import { speakCantonese, audioService } from '../utils/audio';
 import {
   Sparkles,
@@ -18,6 +20,8 @@ import {
   Award,
   Zap,
   Swords,
+  Shield,
+  Layers,
 } from 'lucide-react';
 
 interface PokemonBinderProps {
@@ -43,6 +47,15 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
   const [filterStatus, setFilterStatus] = useState<'all' | 'unlocked' | 'locked'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCardForInspect, setSelectedCardForInspect] = useState<PokemonCardData | null>(null);
+  const [isDeckModalOpen, setIsDeckModalOpen] = useState<boolean>(false);
+  const [activeDeck, setActiveDeck] = useState<number[]>(() => {
+    return getPlayerBattleDeck(cardInventory).deckCardIds;
+  });
+
+  // Refresh deck whenever cardInventory changes or modal closes
+  useEffect(() => {
+    setActiveDeck(getPlayerBattleDeck(cardInventory).deckCardIds);
+  }, [cardInventory, isDeckModalOpen]);
 
   // Compute effective unlocked card IDs reliably from either prop or inventory map
   const effectiveUnlockedCardIds = useMemo(() => {
@@ -178,13 +191,22 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
               </div>
             )}
 
-            {/* Quick Action Buttons for Battle & Leaderboard */}
-            <div className="flex items-center gap-2 w-full justify-end">
+            {/* Quick Action Buttons for Battle, Deck & Leaderboard */}
+            <div className="flex flex-wrap items-center gap-2 w-full justify-end">
+              <button
+                type="button"
+                onClick={() => setIsDeckModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 font-bold text-xs border border-amber-500/50 flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+              >
+                <Layers className="w-3.5 h-3.5 text-amber-400" />
+                <span>戰鬥卡組 (4隻) ⚔️</span>
+              </button>
+
               {onOpenLeaderboard && (
                 <button
                   type="button"
                   onClick={onOpenLeaderboard}
-                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-slate-700 flex items-center gap-1.5 transition-all shadow-md active:scale-95"
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-slate-700 flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
                 >
                   <Trophy className="w-3.5 h-3.5 text-amber-400" />
                   <span>榮譽排行榜</span>
@@ -194,7 +216,7 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
                 <button
                   type="button"
                   onClick={onOpenBattle}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black text-xs border border-red-500/50 flex items-center gap-1.5 transition-all shadow-md shadow-red-600/30 active:scale-95 animate-pulse"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black text-xs border border-red-500/50 flex items-center gap-1.5 transition-all shadow-md shadow-red-600/30 active:scale-95 cursor-pointer animate-pulse"
                 >
                   <Swords className="w-4 h-4" />
                   <span>寶可夢對戰 ⚔️</span>
@@ -410,15 +432,42 @@ export const PokemonBinder: React.FC<PokemonBinderProps> = ({
               </p>
             </div>
 
-            <button
-              onClick={() => setSelectedCardForInspect(null)}
-              className="mt-4 px-6 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs"
-            >
-              返回卡冊
-            </button>
+            <div className="mt-4 flex items-center gap-3 w-full justify-center">
+              {effectiveUnlockedCardIds.includes(selectedCardForInspect.id) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCardForInspect(null);
+                    setIsDeckModalOpen(true);
+                  }}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md active:scale-95 cursor-pointer"
+                >
+                  <Swords className="w-4 h-4" />
+                  <span>配置到戰鬥卡組</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setSelectedCardForInspect(null)}
+                className="px-6 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs cursor-pointer"
+              >
+                返回卡冊
+              </button>
+            </div>
           </div>
         </div>
       )}
+
+      {/* BATTLE DECK CUSTOMIZER MODAL */}
+      <BattleDeckModal
+        isOpen={isDeckModalOpen}
+        onClose={() => setIsDeckModalOpen(false)}
+        cardInventory={cardInventory}
+        onDeckSaved={(newDeck) => {
+          setActiveDeck(newDeck);
+        }}
+      />
     </div>
   );
 };

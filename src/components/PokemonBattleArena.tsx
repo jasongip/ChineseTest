@@ -6,6 +6,8 @@ import {
   getAttackMultiplier,
   updatePlayerStats,
   resolveOpponentDeck,
+  getPlayerBattleDeck,
+  savePlayerBattleDeck,
 } from '../utils/battleUtils';
 import { speakCantonese, audioService } from '../utils/audio';
 import {
@@ -113,24 +115,27 @@ export const PokemonBattleArena: React.FC<PokemonBattleArenaProps> = ({
   } | null>(null);
   const [chosenCopyCardId, setChosenCopyCardId] = useState<number | null>(null);
 
-  // Initialize player deck selection on open
+  const [isSavedAsDefault, setIsSavedAsDefault] = useState<boolean>(false);
+
+  // Initialize player deck selection on open from custom deck or randomized owned cards
   useEffect(() => {
     if (isOpen) {
-      const defaultIds = availablePlayerCards.slice(0, 4).map((c) => c.id);
-      setSelectedDeckIds(defaultIds);
+      const { deckCardIds } = getPlayerBattleDeck(cardInventory);
+      setSelectedDeckIds(deckCardIds);
       setPhase('deck_select');
       setChosenCopyCardId(null);
+      setIsSavedAsDefault(false);
     }
-  }, [isOpen, availablePlayerCards]);
+  }, [isOpen, cardInventory]);
 
   // Current Active Fighters
   const activePlayerFighter = playerTeam[playerActiveIdx];
   const activeEnemyFighter = enemyTeam[enemyActiveIdx];
 
-  // Rival's 4 Cards (Strictly guaranteed 4 cards with matching attributes or R/SR random fillers)
+  // Rival's 4 Cards (Custom deck if configured, or random 4 cards from opponent's owned collection)
   const enemyCards = useMemo(() => {
     if (!rival) return resolveOpponentDeck();
-    return resolveOpponentDeck(rival.deckCardIds);
+    return resolveOpponentDeck(rival.deckCardIds, undefined, rival.unlockedCardIds);
   }, [rival]);
 
   // Handle deck selection toggle
@@ -507,9 +512,38 @@ export const PokemonBattleArena: React.FC<PokemonBattleArenaProps> = ({
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-bold text-amber-300">
                   <span>已選卡牌：{selectedDeckIds.length} / 4 張</span>
                 </span>
-                <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-950/60 border border-emerald-600/40 text-xs font-bold text-emerald-300">
-                  <span>🔰 新手學員首發陣容已就緒（4隻精靈）</span>
-                </span>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const shuffled = [...availablePlayerCards].sort(() => Math.random() - 0.5);
+                    const newIds = shuffled.slice(0, 4).map((c) => c.id);
+                    setSelectedDeckIds(newIds);
+                    setIsSavedAsDefault(false);
+                    speakCantonese('已隨機抽取 4 隻精靈！');
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs text-amber-200 font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm"
+                >
+                  🎲 隨機換一套
+                </button>
+
+                {selectedDeckIds.length === 4 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      savePlayerBattleDeck(selectedDeckIds);
+                      setIsSavedAsDefault(true);
+                      speakCantonese('已儲存為你的專屬戰鬥卡組！');
+                    }}
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm ${
+                      isSavedAsDefault
+                        ? 'bg-emerald-900/80 border-emerald-500 text-emerald-300'
+                        : 'bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/50 text-amber-300'
+                    }`}
+                  >
+                    💾 {isSavedAsDefault ? '✓ 已設為默認卡組' : '設為默認戰鬥卡組'}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -867,10 +901,7 @@ export const PokemonBattleArena: React.FC<PokemonBattleArenaProps> = ({
                           </button>
                         )}
                       </div>
-                    ) : (quizSeries[currentQuizStep].targetWord ||
-                        quizSeries[currentQuizStep].type === 'audio_mc' ||
-                        quizSeries[currentQuizStep].type === 'read_aloud' ||
-                        quizSeries[currentQuizStep].type === 'scramble') ? (
+                    ) : quizSeries[currentQuizStep].type === 'audio_mc' ? (
                       <button
                         type="button"
                         onClick={() =>
@@ -881,10 +912,19 @@ export const PokemonBattleArena: React.FC<PokemonBattleArenaProps> = ({
                         }
                         className="mt-1 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer"
                       >
-                        <Volume2 className="w-4 h-4" />
-                        {quizSeries[currentQuizStep].type === 'scramble'
-                          ? '朗讀完整句子 🔊'
-                          : '點擊播放廣東話發音 🔊'}
+                        <Volume2 className="w-4 h-4" /> 點擊播放廣東話發音 🔊
+                      </button>
+                    ) : quizSeries[currentQuizStep].type === 'scramble' ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          speakCantonese(
+                            quizSeries[currentQuizStep].correctAnswer
+                          )
+                        }
+                        className="mt-1 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer"
+                      >
+                        <Volume2 className="w-4 h-4" /> 朗讀正確語句示範 🔊
                       </button>
                     ) : null}
                   </div>
